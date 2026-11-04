@@ -1,0 +1,9 @@
+**/target
+**/node_modules
+frontend/dist
+frontend/.angular
+.git
+.idea
+.vscode
+docs
+k8s
