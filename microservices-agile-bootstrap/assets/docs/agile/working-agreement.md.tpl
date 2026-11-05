@@ -1,39 +1,39 @@
-# Charte de fonctionnement Scrum
+# Scrum working agreement
 
-## Rôles
+## Roles
 
-| Rôle | Responsabilités | Titulaire |
+| Role | Responsibilities | Holder |
 |---|---|---|
-| Product Owner | Porte la vision, ordonne le Product Backlog, accepte les stories | _à définir_ |
-| Scrum Master | Garant du cadre Scrum, lève les obstacles, facilite les cérémonies | _à définir_ |
-| Équipe de développement | Conçoit, développe, teste et livre l'incrément ; auto-organisée | _à définir_ |
+| Product Owner | Carries the vision, orders the Product Backlog, accepts stories | _to be defined_ |
+| Scrum Master | Guardian of the Scrum framework, removes obstacles, facilitates ceremonies | _to be defined_ |
+| Development team | Designs, builds, tests and delivers the increment; self-organizing | _to be defined_ |
 
-## Rythme
+## Cadence
 
-- **Sprint** de 2 semaines (à ajuster après le Sprint 1) ; objectif de sprint commun, périmètre négociable, qualité non négociable.
-- Un **incrément** potentiellement livrable (DoD respectée) à la fin de chaque sprint.
+- 2-week **sprint** (adjust after Sprint 1); shared sprint goal, negotiable scope, non-negotiable quality.
+- A potentially shippable **increment** (DoD met) at the end of every sprint.
 
-## Cérémonies
+## Ceremonies
 
-| Cérémonie | Quand | Durée max | Objectif |
+| Ceremony | When | Max duration | Goal |
 |---|---|---|---|
-| Sprint Planning | 1er jour | 2 h | Choisir l'objectif et les stories (DoR), découper en tâches |
-| Daily Scrum | Chaque jour | 15 min | Se synchroniser sur l'objectif de sprint, signaler les blocages |
-| Backlog Refinement | Mi-sprint | 1 h | Clarifier, découper et estimer les prochaines stories |
-| Sprint Review | Dernier jour | 1 h | Démonstration de l'incrément, retours des parties prenantes |
-| Rétrospective | Dernier jour | 1 h | Une amélioration concrète et suivie pour le sprint suivant |
+| Sprint Planning | Day 1 | 2 h | Choose the goal and stories (DoR), split into tasks |
+| Daily Scrum | Every day | 15 min | Sync on the sprint goal, flag blockers |
+| Backlog Refinement | Mid-sprint | 1 h | Clarify, split and estimate upcoming stories |
+| Sprint Review | Last day | 1 h | Demonstrate the increment, gather stakeholder feedback |
+| Retrospective | Last day | 1 h | One concrete, tracked improvement for the next sprint |
 
 ## Estimation
 
-Story points (suite de Fibonacci) en planning poker, relatifs à une story de référence choisie par l'équipe. La vélocité (points terminés par sprint) sert à planifier, jamais à comparer des personnes ou des équipes.
+Story points (Fibonacci sequence) with planning poker, relative to a reference story chosen by the team. Velocity (points done per sprint) is used for planning, never to compare people or teams.
 
-## Indicateurs suivis
+## Tracked indicators
 
-Vélocité, burndown de sprint, taux de stories respectant la DoR, nombre de défauts échappés, délai entre commit et mise en production (lead time), temps de build CI.
+Velocity, sprint burndown, share of stories meeting the DoR, number of escaped defects, lead time from commit to production, CI build time.
 
-## Accords d'équipe
+## Team agreements
 
-- Une seule source de vérité : le Product Backlog et le board du sprint.
-- On limite le travail en cours : finir avant de commencer.
-- Les décisions d'architecture se prennent en équipe et s'écrivent (ADR).
-- Les blocages se remontent le jour même.
+- A single source of truth: the Product Backlog and the sprint board.
+- We limit work in progress: finish before starting.
+- Architecture decisions are made as a team and written down (ADR).
+- Blockers are raised the same day.

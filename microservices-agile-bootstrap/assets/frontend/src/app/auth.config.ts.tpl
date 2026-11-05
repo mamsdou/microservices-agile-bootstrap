@@ -12,7 +12,7 @@ const defaults: AppConfig = {
   clientId: '@@KEYCLOAK_CLIENT_ID@@',
 };
 
-/** Fusionne les valeurs par defaut avec window.APP_CONFIG (fichier config.js, modifiable au deploiement). */
+/** Merges the defaults with window.APP_CONFIG (config.js file, editable at deployment). */
 export function buildAuthConfig(): AuthConfig {
   const runtime = (window as unknown as { APP_CONFIG?: Partial<AppConfig> }).APP_CONFIG ?? {};
   const cfg = { ...defaults, ...runtime };
@@ -20,10 +20,10 @@ export function buildAuthConfig(): AuthConfig {
     issuer: `${cfg.keycloakUrl}/realms/${cfg.realm}`,
     clientId: cfg.clientId,
     redirectUri: window.location.origin,
-    // Flux "authorization code" + PKCE : pas de secret cote navigateur.
+    // "Authorization code" + PKCE flow: no secret in the browser.
     responseType: 'code',
     scope: 'openid profile email',
-    // HTTP autorise pour le developpement local uniquement : passer a true derriere HTTPS.
+    // HTTP allowed for local development only: set to true behind HTTPS.
     requireHttps: false,
     showDebugInformation: false,
   };

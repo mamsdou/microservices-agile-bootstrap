@@ -3,7 +3,7 @@ import { OAuthService } from 'angular-oauth2-oidc';
 
 import { buildAuthConfig } from './auth.config';
 
-/** Connexion OIDC (Keycloak) : l'access token est ajoute aux appels /api par OAuthModule. */
+/** OIDC login (Keycloak): the access token is added to /api calls by OAuthModule. */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   roles: string[] = [];
@@ -11,7 +11,7 @@ export class AuthService {
 
   constructor(private readonly oauth: OAuthService) {}
 
-  /** Appele au demarrage de l'application. Ne bloque jamais l'affichage si Keycloak est injoignable. */
+  /** Called at application startup. Never blocks the UI if Keycloak is unreachable. */
   async init(): Promise<void> {
     this.oauth.configure(buildAuthConfig());
     this.oauth.events.subscribe((event) => {
@@ -26,7 +26,7 @@ export class AuthService {
         this.oauth.setupAutomaticSilentRefresh();
       }
     } catch (error) {
-      console.warn('Authentification indisponible', error);
+      console.warn('Authentication unavailable', error);
       this.unavailable = true;
     }
   }
@@ -48,7 +48,7 @@ export class AuthService {
     this.oauth.logOut();
   }
 
-  /** Lit les roles de realm dans l'access token (affichage uniquement : l'autorisation est faite cote serveur). */
+  /** Reads the realm roles from the access token (display only: authorization is done on the server). */
   private readRoles(): string[] {
     const token = this.oauth.getAccessToken();
     if (!token) {

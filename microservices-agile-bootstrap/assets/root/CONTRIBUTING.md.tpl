@@ -1,25 +1,25 @@
-# Guide de contribution
+# Contributing guide
 
-## Flux de travail Git
+## Git workflow
 
-- Branche principale `main` toujours déployable ; travail dans des branches courtes `feature/US-123-titre-court`, `fix/…`, `chore/…`.
-- Une **Pull Request** par user story (ou par partie indépendante d'une story), relue par au moins une personne, CI verte.
-- Rebase ou squash avant fusion pour garder un historique lisible.
+- Main branch `main` is always deployable; work in short branches `feature/US-123-short-title`, `fix/…`, `chore/…`.
+- One **Pull Request** per user story (or independent part of a story), reviewed by at least one person, with green CI.
+- Rebase or squash before merging to keep a readable history.
 
-## Messages de commit (Conventional Commits)
+## Commit messages (Conventional Commits)
 
-`type(portée): résumé à l'impératif` — types : `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`.
-Exemple : `feat(order): publier un événement après création (US-004)`.
+`type(scope): summary in the imperative`, with types `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`.
+Example: `feat(order): publish an event after creation (US-004)`.
 
-## Avant d'ouvrir une PR
+## Before opening a PR
 
-1. La story respecte la [Definition of Ready](docs/agile/definition-of-ready.md) et la PR la [Definition of Done](docs/agile/definition-of-done.md).
-2. `mvn -B verify` passe ; `npx ng build` passe si le front est touché.
-3. Toute décision d'architecture notable est consignée dans un ADR (`docs/adr/`, numéro suivant).
-4. Les contrats entre services (API REST, événements Kafka) changent de façon rétrocompatible, ou sont versionnés.
+1. The story meets the [Definition of Ready](docs/agile/definition-of-ready.md) and the PR the [Definition of Done](docs/agile/definition-of-done.md).
+2. `mvn -B verify` passes; `npx ng build` passes if the front is touched.
+3. Any notable architecture decision is recorded in an ADR (`docs/adr/`, next number).
+4. Contracts between services (REST APIs, Kafka events) change in a backward-compatible way, or are versioned.
 
-## Règles d'architecture
+## Architecture rules
 
-- Un service = ses données : pas d'accès direct à la base d'un autre service.
-- Communication synchrone via la gateway/REST, asynchrone via Kafka ; consommateurs idempotents.
-- Aucune valeur secrète dans le dépôt.
+- One service = its data: no direct access to another service's database.
+- Synchronous communication through the gateway/REST, asynchronous through Kafka; idempotent consumers.
+- No secret value in the repository.

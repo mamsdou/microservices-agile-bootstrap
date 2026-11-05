@@ -9,7 +9,7 @@ import org.springframework.kafka.config.TopicBuilder;
 @Configuration
 public class KafkaTopicConfig {
 
-    /** Declare le topic du service ; cree au demarrage s'il n'existe pas. */
+    /** Declares the service topic; created at startup if it does not exist. */
     @Bean
     NewTopic serviceEventsTopic(@Value("${app.kafka.topic}") String topic) {
         return TopicBuilder.name(topic).partitions(3).replicas(1).build();

@@ -1,197 +1,195 @@
-"""Architecture Decision Records (format Michael Nygard) générés avec le squelette.
+"""Architecture Decision Records (Michael Nygard format) generated with the skeleton.
 
-Chaque entrée décrit une décision déjà matérialisée dans le code généré. Les textes sont
-volontairement courts : l'équipe les complète avec son contexte réel.
+Each entry describes a decision already embodied in the generated code. The texts are
+deliberately short: the team completes them with its real context.
 """
 
 ADRS = [
     {
-        "title": "Architecture microservices",
+        "title": "Microservices architecture",
         "context": (
-            "Le produit doit évoluer par domaines métier indépendants, avec des équipes pouvant "
-            "livrer sans coordination lourde. Un monolithe modulaire serait plus simple au début, "
-            "mais l'organisation cible et la scalabilité différenciée des fonctions justifient "
-            "des services séparés."
+            "The product must evolve through independent business domains, with teams able to "
+            "deliver without heavy coordination. A modular monolith would be simpler at first, "
+            "but the target organization and the need to scale functions differently justify "
+            "separate services."
         ),
         "decision": (
-            "Découper le système en microservices métier autonomes (un service = un contexte "
-            "borné, ses données, son cycle de livraison), derrière une API Gateway. "
-            "Chaque service est une application Spring Boot 3 / Java 21."
+            "Split the system into autonomous business microservices (one service = one bounded "
+            "context, its data, its delivery cycle), behind an API Gateway. "
+            "Each service is a Spring Boot 3 / Java 21 application."
         ),
         "consequences": (
-            "+ Déploiement et scalabilité indépendants, frontières de domaine explicites.\n"
-            "- Complexité opérationnelle (réseau, observabilité, cohérence éventuelle).\n"
-            "- Nécessité d'outillage (CI/CD, supervision) dès le début : couvert par ce squelette.\n"
-            "Révision possible : regrouper des services si le découpage s'avère trop fin."
+            "+ Independent deployment and scaling, explicit domain boundaries.\n"
+            "- Operational complexity (network, observability, eventual consistency).\n"
+            "- Tooling needed from the start (CI/CD, monitoring): covered by this skeleton.\n"
+            "Possible review: merge services if the split proves too fine."
         ),
     },
     {
-        "title": "Spring Cloud : Config Server, Eureka, Gateway",
+        "title": "Spring Cloud: Config Server, Eureka, Gateway",
         "context": (
-            "Il faut externaliser la configuration, localiser dynamiquement les instances et "
-            "offrir un point d'entrée unique (routage, CORS, futur contrôle d'accès)."
+            "Configuration must be externalized, instances located dynamically, and a single "
+            "entry point offered (routing, CORS, access control)."
         ),
         "decision": (
-            "Utiliser Spring Cloud Config Server (backend `native` en dev, fichiers dans "
-            "`config-server/src/main/resources/config-repo`), Eureka pour la découverte et "
-            "Spring Cloud Gateway pour le routage `lb://<service>`. Les placeholders "
-            "`${VAR:défaut}` sont résolus côté client, ce qui garde les mêmes fichiers en local, "
-            "Compose et Kubernetes."
+            "Use Spring Cloud Config Server (`native` backend in dev, files in "
+            "`config-server/src/main/resources/config-repo`), Eureka for discovery and "
+            "Spring Cloud Gateway for `lb://<service>` routing. `${VAR:default}` placeholders "
+            "are resolved on the client side, which keeps the same files for local, "
+            "Compose and Kubernetes."
         ),
         "consequences": (
-            "+ Un seul endroit pour la configuration ; services interchangeables.\n"
-            "- Config Server et Eureka deviennent des composants critiques au démarrage.\n"
-            "- En production : passer le Config Server sur un dépôt Git chiffré et évaluer la "
-            "découverte native de Kubernetes pour retirer Eureka (nouvel ADR le cas échéant)."
+            "+ A single place for configuration; interchangeable services.\n"
+            "- Config Server and Eureka become critical startup components.\n"
+            "- In production: move the Config Server to an encrypted Git repository and evaluate "
+            "native Kubernetes discovery to remove Eureka (new ADR if so)."
         ),
     },
     {
-        "title": "Une base PostgreSQL par service",
+        "title": "One PostgreSQL database per service",
         "context": (
-            "Partager un schéma entre services recrée un couplage fort et empêche des "
-            "déploiements indépendants."
+            "Sharing a schema between services recreates strong coupling and prevents "
+            "independent deployments."
         ),
         "decision": (
-            "Chaque service possède sa base logique PostgreSQL (`<service>_db`), versionnée avec "
-            "Flyway, avec Hibernate en `validate`. Aucun accès inter-bases ; échanges par API ou "
-            "événements."
+            "Each service owns its logical PostgreSQL database (`<service>_db`), versioned with "
+            "Flyway, with Hibernate in `validate` mode. No cross-database access; exchanges go "
+            "through APIs or events."
         ),
         "consequences": (
-            "+ Autonomie, évolutions de schéma sans impact sur les autres services.\n"
-            "- Pas de jointures ni de transactions multi-services : cohérence éventuelle, sagas.\n"
-            "- En dev une seule instance héberge toutes les bases (coût réduit)."
+            "+ Autonomy, schema changes with no impact on other services.\n"
+            "- No multi-service joins or transactions: eventual consistency, sagas.\n"
+            "- In dev a single instance hosts all databases (lower cost)."
         ),
     },
     {
-        "title": "Apache Kafka pour la communication asynchrone",
+        "title": "Apache Kafka for asynchronous communication",
         "context": (
-            "Les services doivent réagir aux faits métier des autres sans appels synchrones "
-            "enchaînés (fragiles et couplés dans le temps)."
+            "Services must react to each other's business facts without chained synchronous "
+            "calls (fragile and coupled in time)."
         ),
         "decision": (
-            "Utiliser Kafka (mode KRaft, sans ZooKeeper) comme bus d'événements. Un topic "
-            "`<service>.events` par service producteur, messages JSON clés par identifiant "
-            "d'agrégat, groupe de consommation = nom du service."
+            "Use Kafka (KRaft mode, no ZooKeeper) as the event bus. One `<service>.events` topic "
+            "per producing service, JSON messages keyed by aggregate identifier, consumer "
+            "group = service name."
         ),
         "consequences": (
-            "+ Découplage temporel, relecture possible, montée en charge par partitions.\n"
-            "- Consommateurs obligatoirement idempotents (livraison au moins une fois).\n"
-            "- Gouvernance des contrats d'événements nécessaire (voir docs/architecture/02)."
+            "+ Temporal decoupling, replay possible, scaling through partitions.\n"
+            "- Consumers must be idempotent (at-least-once delivery).\n"
+            "- Event contract governance needed (see docs/architecture/02)."
         ),
     },
     {
-        "title": "Publication des événements après commit, Outbox en cible",
+        "title": "Publishing events after commit, Outbox as the target",
         "context": (
-            "Publier sur Kafka dans la transaction métier n'est pas atomique : on peut publier "
-            "un événement pour des données finalement annulées, ou l'inverse."
+            "Publishing to Kafka inside the business transaction is not atomic: an event can be "
+            "published for data that is then rolled back, or the reverse."
         ),
         "decision": (
-            "Publier via `@TransactionalEventListener(AFTER_COMMIT)` : aucun événement pour une "
-            "transaction annulée. Accepter pour l'instant la perte possible si Kafka est "
-            "indisponible juste après le commit, et planifier le pattern Transactional Outbox "
-            "(table `outbox` + relais) dans le backlog."
+            "Publish through `@TransactionalEventListener(AFTER_COMMIT)`: no event for a "
+            "rolled-back transaction. Accept for now the possible loss if Kafka is unavailable "
+            "right after commit, and plan the Transactional Outbox pattern (`outbox` table + "
+            "relay) in the backlog."
         ),
         "consequences": (
-            "+ Simple, sans dépendance supplémentaire, suffisant pour démarrer.\n"
-            "- Garantie de livraison partielle tant que l'Outbox n'est pas en place : "
-            "à traiter avant tout flux critique (paiement, facturation)."
+            "+ Simple, no extra dependency, enough to start.\n"
+            "- Partial delivery guarantee until the Outbox is in place: "
+            "address before any critical flow (payment, billing)."
         ),
     },
     {
-        "title": "Observabilité avec la stack ELK via Logstash TCP",
+        "title": "Observability with the ELK stack through Logstash TCP",
         "context": (
-            "Diagnostiquer un incident dans un système distribué impose de centraliser les logs "
-            "avec un format structuré."
+            "Diagnosing an incident in a distributed system requires centralized logs in a "
+            "structured format."
         ),
         "decision": (
-            "Chaque service émet des logs JSON (`logstash-logback-encoder`) vers Logstash (TCP "
-            "5000) avec le profil Spring `elk`, en plus de la console. Logstash alimente "
-            "Elasticsearch (index `logs-<app>-<date>`), exploré dans Kibana 8."
+            "Each service emits JSON logs (`logstash-logback-encoder`) to Logstash (TCP 5000) "
+            "with the Spring `elk` profile, in addition to the console. Logstash feeds "
+            "Elasticsearch (`logs-<app>-<date>` index), explored in Kibana 8."
         ),
         "consequences": (
-            "+ Mise en place simple, pas d'agent à déployer sur les nœuds.\n"
-            "- Perte de logs si Logstash est indisponible (reconnexion, pas de tampon disque).\n"
-            "- Sécurité Elastic désactivée en dev ; consommation mémoire notable.\n"
-            "À évaluer plus tard : Filebeat/Elastic Agent, traces distribuées OpenTelemetry."
+            "+ Simple setup, no agent to deploy on nodes.\n"
+            "- Logs lost if Logstash is unavailable (reconnection, no disk buffer).\n"
+            "- Elastic security disabled in dev; significant memory use.\n"
+            "To evaluate later: Filebeat/Elastic Agent, OpenTelemetry distributed tracing."
         ),
     },
     {
-        "title": "Frontend Angular 15 servi par nginx",
+        "title": "Angular 15 frontend served by nginx",
         "context": (
-            "L'interface web doit être découplée des services et déployable comme un artefact "
-            "statique."
+            "The web UI must be decoupled from the services and deployable as a static artifact."
         ),
         "decision": (
-            "Application Angular 15 (NgModule, HttpClient) construite en image multi-étapes puis "
-            "servie par nginx, qui relaie `/api` vers la gateway (même origine, pas de CORS en "
-            "conteneur). En développement `ng serve` utilise un proxy vers :8080."
+            "Angular 15 application (NgModule, HttpClient) built in a multi-stage image then "
+            "served by nginx, which forwards `/api` to the gateway (same origin, no CORS in "
+            "containers). In development `ng serve` uses a proxy to :8080."
         ),
         "consequences": (
-            "+ Image légère, configuration identique en Compose et Kubernetes.\n"
-            "- Angular 15 n'est plus supporté activement : prévoir une montée de version "
-            "(story technique) avant la mise en production."
+            "+ Light image, identical configuration in Compose and Kubernetes.\n"
+            "- Angular 15 is no longer actively supported: plan an upgrade "
+            "(technical story) before going to production."
         ),
     },
     {
-        "title": "Conteneurisation Docker et déploiement Kubernetes (kustomize)",
+        "title": "Docker containerization and Kubernetes deployment (kustomize)",
         "context": (
-            "Il faut un environnement de dev reproductible et une cible de production "
-            "orchestrée."
+            "A reproducible dev environment and an orchestrated production target are needed."
         ),
         "decision": (
-            "Une image Java générique (`infra/docker/Dockerfile.java`, build Maven multi-étapes, "
-            "utilisateur non root), un `docker-compose.yml` pour le poste de dev et des manifests "
-            "Kubernetes assemblés par kustomize (sondes Actuator, ressources, ConfigMap/Secret)."
+            "One generic Java image (`infra/docker/Dockerfile.java`, multi-stage Maven build, "
+            "non-root user), a `docker-compose.yml` for the dev machine and Kubernetes manifests "
+            "assembled by kustomize (Actuator probes, resources, ConfigMap/Secret)."
         ),
         "consequences": (
-            "+ Parité dev/prod, déploiement déclaratif.\n"
-            "- L'infrastructure de données (Postgres, Kafka, Elasticsearch) est en instance "
-            "unique : à remplacer par des opérateurs ou services managés en production.\n"
-            "- Les secrets de dev ne conviennent pas à la production."
+            "+ Dev/prod parity, declarative deployment.\n"
+            "- Data infrastructure (Postgres, Kafka, Elasticsearch) is single-instance: "
+            "replace with operators or managed services in production.\n"
+            "- Dev secrets are not suitable for production."
         ),
     },
     {
-        "title": "Monorepo Maven multi-modules",
+        "title": "Maven multi-module monorepo",
         "context": (
-            "Une petite équipe démarre ; séparer immédiatement un dépôt par service multiplierait "
-            "la charge de coordination (versions, revues, CI)."
+            "A small team is starting; splitting into one repository per service right away "
+            "would multiply the coordination load (versions, reviews, CI)."
         ),
         "decision": (
-            "Un seul dépôt avec un POM parent (Java 21, BOM Spring Boot et Spring Cloud) et un "
-            "module par service ; `frontend/` et `infra/` dans le même dépôt. CI unique."
+            "One repository with a parent POM (Java 21, Spring Boot and Spring Cloud BOMs) and "
+            "one module per service; `frontend/` and `infra/` in the same repository. Single CI."
         ),
         "consequences": (
-            "+ Refactorings transverses simples, versions alignées, onboarding rapide.\n"
-            "- Le pipeline doit éviter de tout reconstruire à chaque changement (builds "
-            "incrémentaux à prévoir).\n"
-            "Découpable en plusieurs dépôts plus tard si l'organisation l'exige."
+            "+ Simple cross-cutting refactorings, aligned versions, fast onboarding.\n"
+            "- The pipeline must avoid rebuilding everything on every change (incremental "
+            "builds to plan).\n"
+            "Can be split into several repositories later if the organization requires it."
         ),
     },
     {
-        "title": "Authentification et autorisation avec Keycloak (OIDC) et JWT",
+        "title": "Authentication and authorization with Keycloak (OIDC) and JWT",
         "context": (
-            "L'API ne doit être accessible qu'à des utilisateurs identifiés, avec des droits "
-            "différents selon leur rôle. Écrire un serveur d'identité maison est coûteux et risqué."
+            "The API must only be accessible to identified users, with different rights "
+            "depending on their role. Writing an in-house identity server is costly and risky."
         ),
         "decision": (
-            "Utiliser Keycloak comme fournisseur d'identité (OpenID Connect). Le frontend Angular "
-            "se connecte par le flux code d'autorisation + PKCE (client public, sans secret). "
-            "La gateway et chaque service sont des « resource servers » : ils valident le JWT "
-            "(signature par JWKS, émetteur, expiration). Les rôles de realm (`realm_access.roles`) "
-            "deviennent des autorités Spring (`ROLE_<nom>`) ; chaque service déclare ses rôles "
-            "d'écriture et de lecture dans la configuration centralisée (`app.security.*`). "
-            "Le jeton est relayé par la gateway ; les services le revalident (défense en profondeur)."
+            "Use Keycloak as the identity provider (OpenID Connect). The Angular frontend signs "
+            "in with the authorization code + PKCE flow (public client, no secret). "
+            "The gateway and each service are resource servers: they validate the JWT "
+            "(JWKS signature, issuer, expiry). Realm roles (`realm_access.roles`) become Spring "
+            "authorities (`ROLE_<name>`); each service declares its write and read roles in "
+            "centralized configuration (`app.security.*`). The token is forwarded by the "
+            "gateway; services revalidate it (defense in depth)."
         ),
         "consequences": (
-            "+ Standards ouverts, SSO, comptes et rôles gérés hors du code, aucun mot de passe "
-            "manipulé par nos services.\n"
-            "+ Un service appelé directement reste protégé.\n"
-            "- Keycloak devient un composant critique à exploiter (le mode `start-dev` fourni ne "
-            "convient pas à la production : base dédiée, HTTPS, haute disponibilité).\n"
-            "- Les rôles ne suffisent pas pour la propriété des données (un client ne voit que ses "
-            "objets) : à traiter métier par métier via le claim `sub`.\n"
-            "- L'URL de l'émetteur doit être identique pour le navigateur et les services "
-            "(voir docs/architecture/06-securite.md)."
+            "+ Open standards, SSO, accounts and roles managed outside the code, no password "
+            "handled by our services.\n"
+            "+ A service called directly remains protected.\n"
+            "- Keycloak becomes a critical component to operate (the provided `start-dev` mode "
+            "is not suitable for production: dedicated database, HTTPS, high availability).\n"
+            "- Roles are not enough for data ownership (a customer sees only their objects): "
+            "handle it per domain with the `sub` claim.\n"
+            "- The issuer URL must be identical for the browser and the services "
+            "(see docs/architecture/06-security.md)."
         ),
     },
 ]
@@ -200,26 +198,26 @@ ADRS = [
 def render_adr(number: int, adr: dict, date: str) -> str:
     return (
         f"# ADR-{number:04d} — {adr['title']}\n\n"
-        f"- **Statut** : Accepté\n"
-        f"- **Date** : {date}\n\n"
-        f"## Contexte\n\n{adr['context']}\n\n"
-        f"## Décision\n\n{adr['decision']}\n\n"
-        f"## Conséquences\n\n{adr['consequences']}\n"
+        f"- **Status**: Accepted\n"
+        f"- **Date**: {date}\n\n"
+        f"## Context\n\n{adr['context']}\n\n"
+        f"## Decision\n\n{adr['decision']}\n\n"
+        f"## Consequences\n\n{adr['consequences']}\n"
     )
 
 
 def render_index(date: str) -> str:
     lines = [
-        "# Décisions d'architecture (ADR)",
+        "# Architecture decisions (ADR)",
         "",
-        "Format : [Michael Nygard](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions). "
-        "Un ADR n'est jamais réécrit : pour changer une décision, ajouter un nouvel ADR qui "
-        "la remplace et passer l'ancien au statut « Remplacé par ADR-XXXX ».",
+        "Format: [Michael Nygard](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions). "
+        "An ADR is never rewritten: to change a decision, add a new ADR that supersedes it and "
+        "set the old one's status to \"Superseded by ADR-XXXX\".",
         "",
-        "| N° | Titre | Statut |",
+        "| No. | Title | Status |",
         "|---|---|---|",
     ]
     for i, adr in enumerate(ADRS, start=1):
-        lines.append(f"| [ADR-{i:04d}](ADR-{i:04d}.md) | {adr['title']} | Accepté |")
+        lines.append(f"| [ADR-{i:04d}](ADR-{i:04d}.md) | {adr['title']} | Accepted |")
     lines.append("")
     return "\n".join(lines)

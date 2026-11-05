@@ -14,10 +14,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Le service valide lui-meme le JWT (il ne fait pas confiance au seul reseau interne) et applique
- * les roles definis dans la configuration centralisee :
- * app.security.write-roles = roles autorises a modifier ; app.security.read-roles = roles
- * supplementaires en lecture seule. Les roles d'ecriture peuvent aussi lire.
+ * The service validates the JWT itself (it does not trust the internal network alone) and
+ * applies the roles defined in centralized configuration:
+ * app.security.write-roles = roles allowed to modify; app.security.read-roles = additional
+ * read-only roles. Write roles can also read.
  */
 @Configuration
 @EnableWebSecurity

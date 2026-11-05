@@ -3,10 +3,10 @@
   <div class="user">
     <ng-container *ngIf="auth.isLoggedIn; else loginButton">
       <span>{{ auth.username }} <small>({{ auth.roles.join(', ') }})</small></span>
-      <button type="button" (click)="auth.logout()">Deconnexion</button>
+      <button type="button" (click)="auth.logout()">Sign out</button>
     </ng-container>
     <ng-template #loginButton>
-      <button type="button" (click)="auth.login()">Se connecter</button>
+      <button type="button" (click)="auth.login()">Sign in</button>
     </ng-template>
   </div>
 </header>
@@ -19,8 +19,8 @@
   </nav>
 
   <form (ngSubmit)="add()">
-    <input name="newName" [(ngModel)]="newName" placeholder="Nom" required>
-    <button type="submit">Ajouter</button>
+    <input name="newName" [(ngModel)]="newName" placeholder="Name" required>
+    <button type="submit">Add</button>
   </form>
 
   <p class="error" *ngIf="error">{{ error }}</p>
@@ -35,7 +35,7 @@
 
 <ng-template #anonymous>
   <main>
-    <p *ngIf="!auth.unavailable">Veuillez vous connecter pour acceder a l'application.</p>
-    <p class="error" *ngIf="auth.unavailable">Le service d'authentification est indisponible. Reessayez plus tard.</p>
+    <p *ngIf="!auth.unavailable">Please sign in to access the application.</p>
+    <p class="error" *ngIf="auth.unavailable">The authentication service is unavailable. Please try again later.</p>
   </main>
 </ng-template>

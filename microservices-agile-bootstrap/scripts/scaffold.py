@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
-"""Genere un squelette microservices (Spring Boot 3 / Java 21, Spring Cloud, Angular 15, Kafka,
-PostgreSQL, ELK, Docker Compose, Kubernetes) et la documentation d'architecture/agile associee.
+"""Generates a microservices skeleton (Spring Boot 3 / Java 21, Spring Cloud, Angular 15, Kafka,
+PostgreSQL, ELK, Docker Compose, Kubernetes) and the associated architecture/agile documentation.
 
-Exemple :
+Example:
   python scaffold.py --project shopflow --title "ShopFlow" \
-      --domain "Plateforme e-commerce" --group-id com.acme.shopflow \
+      --domain "E-commerce platform" --group-id com.acme.shopflow \
       --roles admin,merchant,customer \
       --services "catalog:8081:w=admin+merchant:r=customer,order:8082:w=customer+admin:r=merchant,notification:8083:w=admin" \
       --out ./shopflow
 
-Syntaxe d'un service : nom[:port][:w=role+role][:r=role+role]
-  w = roles autorises a ecrire (et lire), r = roles en lecture seule.
-Le premier service publie des evenements Kafka, les suivants les consomment.
+Service syntax: name[:port][:w=role+role][:r=role+role]
+  w = roles allowed to write (and read), r = read-only roles.
+The first service publishes Kafka events, the others consume them.
 
-Les modeles sont dans ../assets (suffixe .tpl, jetons @@NOM@@ dans le contenu, __NOM__ dans les
-chemins). Les fichiers dependant de la liste de services (compose, k8s, config-repo, tableaux de
-docs) sont produits ici.
+Templates are in ../assets (.tpl suffix, @@NAME@@ tokens in content, __NAME__ in paths). Files
+that depend on the service list (compose, k8s, config-repo, doc tables) are produced here.
 """
 from __future__ import annotations
 
@@ -33,7 +32,7 @@ from adrs import ADRS, render_adr, render_index  # noqa: E402
 
 ASSETS = HERE.parent / "assets"
 
-# --- Versions : a changer ensemble (voir references/architecture.md) -------------------------
+# --- Versions: change them together (see references/architecture.md) ------------------------
 SPRING_BOOT_VERSION = "3.3.5"
 SPRING_CLOUD_VERSION = "2023.0.3"
 POSTGRES_IMAGE = "postgres:16-alpine"
@@ -61,7 +60,7 @@ KEBAB = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$")
 
 
 def pluralize(word: str) -> str:
-    """Pluriel anglais simple pour les noms de ressources REST (delivery -> deliveries)."""
+    """Simple English plural for REST resource names (delivery -> deliveries)."""
     if re.search(r"[^aeiou]y$", word):
         return word[:-1] + "ies"
     if word.endswith(("s", "x", "z", "ch", "sh")):
@@ -70,11 +69,11 @@ def pluralize(word: str) -> str:
 
 
 class Service:
-    """Un microservice metier et tous les noms derives de son nom."""
+    """A business microservice and all the names derived from its name."""
 
     def __init__(self, spec: str, index: int, group_id: str, roles: list[str]):
-        # Syntaxe : nom[:port][:w=role+role][:r=role+role]
-        #   w = roles autorises a modifier (et lire) ; r = roles supplementaires en lecture seule.
+        # Syntax: name[:port][:w=role+role][:r=role+role]
+        #   w = roles allowed to modify (and read); r = additional read-only roles.
         tokens = [t.strip() for t in spec.strip().split(":")]
         name = tokens[0].lower()
         port = ""
@@ -88,14 +87,14 @@ class Service:
             elif token.startswith("r="):
                 read = [r for r in token[2:].split("+") if r]
             elif token:
-                fail(f"Option inconnue '{token}' dans '{spec}' (attendu : port, w=role+role, r=role+role)")
+                fail(f"Unknown option '{token}' in '{spec}' (expected: port, w=role+role, r=role+role)")
         if name.endswith("-service"):
             name = name[: -len("-service")]
         if not KEBAB.match(name):
-            fail(f"Nom de service invalide : '{name}' (kebab-case attendu, ex. 'order')")
+            fail(f"Invalid service name: '{name}' (kebab-case expected, e.g. 'order')")
         parts = name.split("-")
         if any(p in JAVA_KEYWORDS for p in ["".join(parts)] + parts[:1]):
-            fail(f"Le nom de service '{name}' est un mot reserve Java ; en choisir un autre")
+            fail(f"The service name '{name}' is a reserved Java word; choose another one")
         self.index = index
         self.name = name
         self.module = f"{name}-service"
@@ -108,8 +107,8 @@ class Service:
         self.db = f"{name.replace('-', '_')}_db"
         self.topic = f"{name}.events"
         self.label = " ".join(p.capitalize() for p in parts) + "s"
-        # Droits par defaut : le premier role ecrit, les autres lisent. Si w= est precise sans r=,
-        # personne d'autre ne lit.
+        # Default rights: the first role writes, the others read. If w= is given without r=,
+        # nobody else reads.
         self.write_roles = write if write is not None else roles[:1]
         if read is not None:
             self.read_roles = read
@@ -117,16 +116,16 @@ class Service:
             self.read_roles = [] if write is not None else roles[1:]
         unknown = [r for r in self.write_roles + self.read_roles if r not in roles]
         if unknown or not self.write_roles:
-            fail(f"Roles inconnus ou absents pour '{name}' : {unknown or 'aucun role en ecriture'} "
-                 f"(roles declares : {', '.join(roles)})")
+            fail(f"Unknown or missing roles for '{name}': {unknown or 'no write role'} "
+                 f"(declared roles: {', '.join(roles)})")
 
 
 def fail(message: str) -> None:
-    print(f"Erreur : {message}", file=sys.stderr)
+    print(f"Error: {message}", file=sys.stderr)
     sys.exit(1)
 
 
-# --- rendu des modeles ------------------------------------------------------------------------
+# --- template rendering -----------------------------------------------------------------------
 def render(text: str, tokens: dict[str, str]) -> str:
     for key in sorted(tokens, key=len, reverse=True):
         text = text.replace(f"@@{key}@@", str(tokens[key]))
@@ -153,7 +152,7 @@ class Writer:
     def copy_tree(self, src: Path, dest_rel: str, tokens: dict[str, str],
                   name_tokens: dict[str, str] | None = None) -> None:
         if not src.is_dir():
-            fail(f"Modeles introuvables : {src}")
+            fail(f"Templates not found: {src}")
         for path in sorted(src.rglob("*")):
             if not path.is_file():
                 continue
@@ -164,7 +163,7 @@ class Writer:
             self.write(dest, render(path.read_text(encoding="utf-8"), tokens))
 
 
-# --- fichiers generes selon la liste de services --------------------------------------------
+# --- files generated from the service list ---------------------------------------------------
 def indent(text: str, spaces: int) -> str:
     pad = " " * spaces
     return "\n".join(pad + line if line.strip() else line for line in text.splitlines())
@@ -173,7 +172,7 @@ def indent(text: str, spaces: int) -> str:
 def config_repo(services: list[Service], realm: str) -> dict[str, str]:
     files = {
         "application.yml": (
-            "# Configuration partagee par TOUS les services (servie par le Config Server).\n"
+            "# Configuration shared by ALL services (served by the Config Server).\n"
             "eureka:\n"
             "  client:\n"
             "    service-url:\n"
@@ -196,8 +195,8 @@ def config_repo(services: list[Service], realm: str) -> dict[str, str]:
             "    oauth2:\n"
             "      resourceserver:\n"
             "        jwt:\n"
-            "          # iss attendu = URL publique de Keycloak (celle vue par le navigateur) ;\n"
-            "          # les cles de signature sont lues via l'adresse interne (jwk-set-uri).\n"
+            "          # expected iss = public Keycloak URL (the one seen by the browser);\n"
+            "          # signing keys are read through the internal address (jwk-set-uri).\n"
             f"          issuer-uri: ${{KEYCLOAK_ISSUER:http://localhost:8180/realms/{realm}}}\n"
             f"          jwk-set-uri: ${{KEYCLOAK_JWKS:http://localhost:8180/realms/{realm}/protocol/openid-connect/certs}}\n"
         )
@@ -258,7 +257,7 @@ def config_repo(services: list[Service], realm: str) -> dict[str, str]:
 
 
 def init_db_sql(services: list[Service]) -> str:
-    lines = ["-- Une base par service (execute au premier demarrage de PostgreSQL).\n"]
+    lines = ["-- One database per service (run at the first PostgreSQL startup).\n"]
     lines += [f"CREATE DATABASE {s.db};\n" for s in services]
     return "".join(lines)
 
@@ -278,7 +277,7 @@ def compose(project: str, services: list[Service], realm: str) -> str:
             f"      <<: *java-env\n"
             f"{extra_env}"
             f"    ports:\n"
-            f"      - \"{port}:{port}\"\n"
+            f"      - \"127.0.0.1:{port}:{port}\"\n"
             f"{depends}"
             f"    healthcheck:\n"
             f"      test: [\"CMD\", \"curl\", \"-fs\", \"http://localhost:{port}/actuator/health\"]\n"
@@ -308,7 +307,7 @@ def compose(project: str, services: list[Service], realm: str) -> str:
 
     out = [
         f"name: {project}\n\n"
-        "# Stack de DEVELOPPEMENT complete (~6-8 Go de RAM). Valeurs par defaut non securisees.\n"
+        "# Full DEVELOPMENT stack (~6-8 GB of RAM). Insecure default values.\n"
         "x-java-env: &java-env\n"
         "  SPRING_PROFILES_ACTIVE: elk\n"
         "  LOGSTASH_HOST: logstash\n"
@@ -322,7 +321,7 @@ def compose(project: str, services: list[Service], realm: str) -> str:
         java("discovery-server", "discovery-server", 8761),
         java("api-gateway", "api-gateway", 8080,
              depends=healthy("config-server", "discovery-server")),
-        "  # ---------- Microservices metier ----------\n",
+        "  # ---------- Business microservices ----------\n",
     ]
     for s in services:
         out.append(java(s.module, f"services/{s.module}", s.port,
@@ -335,11 +334,11 @@ def compose(project: str, services: list[Service], realm: str) -> str:
         f"    image: {project}/frontend:{IMAGE_TAG}\n"
         "    restart: unless-stopped\n"
         "    ports:\n"
-        "      - \"4200:80\"\n"
+        "      - \"127.0.0.1:4200:80\"\n"
         "    depends_on:\n"
         "      api-gateway:\n"
         "        condition: service_started\n\n"
-        "  # ---------- Donnees et messagerie ----------\n"
+        "  # ---------- Data and messaging ----------\n"
         "  postgres:\n"
         f"    image: {POSTGRES_IMAGE}\n"
         "    restart: unless-stopped\n"
@@ -347,7 +346,7 @@ def compose(project: str, services: list[Service], realm: str) -> str:
         "      POSTGRES_USER: ${POSTGRES_USER:-postgres}\n"
         "      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}\n"
         "    ports:\n"
-        "      - \"5432:5432\"\n"
+        "      - \"127.0.0.1:5432:5432\"\n"
         "    volumes:\n"
         "      - pgdata:/var/lib/postgresql/data\n"
         "      - ./infra/docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro\n"
@@ -360,7 +359,7 @@ def compose(project: str, services: list[Service], realm: str) -> str:
         f"    image: {KAFKA_IMAGE}\n"
         "    restart: unless-stopped\n"
         "    ports:\n"
-        "      - \"29092:29092\"\n"
+        "      - \"127.0.0.1:29092:29092\"\n"
         "    environment:\n"
         "      KAFKA_NODE_ID: 1\n"
         "      KAFKA_PROCESS_ROLES: broker,controller\n"
@@ -381,10 +380,10 @@ def compose(project: str, services: list[Service], realm: str) -> str:
         "      KAFKA_CLUSTERS_0_NAME: local\n"
         "      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092\n"
         "    ports:\n"
-        "      - \"8090:8080\"\n"
+        "      - \"127.0.0.1:8090:8080\"\n"
         "    depends_on:\n"
         "      - kafka\n\n"
-        "  # ---------- Stack ELK (securite desactivee : dev uniquement) ----------\n"
+        "  # ---------- ELK stack (security disabled: dev only) ----------\n"
         "  elasticsearch:\n"
         f"    image: docker.elastic.co/elasticsearch/elasticsearch:{ELASTIC_VERSION}\n"
         "    restart: unless-stopped\n"
@@ -393,7 +392,7 @@ def compose(project: str, services: list[Service], realm: str) -> str:
         "      xpack.security.enabled: \"false\"\n"
         "      ES_JAVA_OPTS: -Xms512m -Xmx512m\n"
         "    ports:\n"
-        "      - \"9200:9200\"\n"
+        "      - \"127.0.0.1:9200:9200\"\n"
         "    volumes:\n"
         "      - esdata:/usr/share/elasticsearch/data\n"
         "    healthcheck:\n"
@@ -411,7 +410,7 @@ def compose(project: str, services: list[Service], realm: str) -> str:
         "    volumes:\n"
         "      - ./infra/elk/logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro\n"
         "    ports:\n"
-        "      - \"5000:5000\"\n"
+        "      - \"127.0.0.1:5000:5000\"\n"
         "    depends_on:\n"
         "      elasticsearch:\n"
         "        condition: service_healthy\n\n"
@@ -421,11 +420,11 @@ def compose(project: str, services: list[Service], realm: str) -> str:
         "    environment:\n"
         "      ELASTICSEARCH_HOSTS: http://elasticsearch:9200\n"
         "    ports:\n"
-        "      - \"5601:5601\"\n"
+        "      - \"127.0.0.1:5601:5601\"\n"
         "    depends_on:\n"
         "      elasticsearch:\n"
         "        condition: service_healthy\n\n"
-        "  # ---------- Authentification : Keycloak en mode dev (H2, realm importe) ----------\n"
+        "  # ---------- Authentication: Keycloak in dev mode (H2, imported realm) ----------\n"
         "  keycloak:\n"
         f"    image: {KEYCLOAK_IMAGE}\n"
         "    command: [\"start-dev\", \"--import-realm\"]\n"
@@ -437,20 +436,10 @@ def compose(project: str, services: list[Service], realm: str) -> str:
         "      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: \"true\"\n"
         "      KC_HTTP_ENABLED: \"true\"\n"
         "    ports:\n"
-        "      - \"8180:8080\"\n"
+        "      - \"127.0.0.1:8180:8080\"\n"
         "    volumes:\n"
         "      - ./infra/keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro\n"
-        "    healthcheck:\n"
-        "      test:\n"
-        "        - CMD-SHELL\n"
-        "        - |\n"
-        "          exec 3<>/dev/tcp/localhost/8080 &&\n"
-        f"          printf 'GET /realms/{realm} HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 &&\n"
-        "          head -n1 <&3 | grep -q 200\n"
-        "      interval: 10s\n"
-        "      timeout: 5s\n"
-        "      retries: 30\n"
-        "      start_period: 60s\n\n"
+        "\n"
         "volumes:\n"
         "  pgdata:\n"
         "  esdata:\n"
@@ -485,8 +474,8 @@ def dev_password(role: str) -> str:
 
 
 def keycloak_realm(realm: str, client_id: str, roles: list[str]) -> str:
-    """Realm importe au demarrage de Keycloak : roles, client public Angular (PKCE), un compte
-    de developpement par role. Les mots de passe de dev ne doivent jamais servir en production."""
+    """Realm imported at Keycloak startup: roles, public Angular client (PKCE), one development
+    account per role. Dev passwords must never be used in production."""
     doc = {
         "realm": realm,
         "enabled": True,
@@ -499,7 +488,7 @@ def keycloak_realm(realm: str, client_id: str, roles: list[str]) -> str:
             "enabled": True,
             "publicClient": True,
             "standardFlowEnabled": True,
-            # Pratique en dev pour obtenir un jeton avec curl ; a desactiver en production.
+            # Handy in dev to get a token with curl; disable in production.
             "directAccessGrantsEnabled": True,
             "redirectUris": ["http://localhost:4200/*"],
             "webOrigins": ["http://localhost:4200"],
@@ -520,10 +509,10 @@ def keycloak_realm(realm: str, client_id: str, roles: list[str]) -> str:
 
 
 def security_tokens(services: list[Service], roles: list[str], realm: str, client_id: str) -> dict[str, str]:
-    matrix = ["| Service | Écriture (POST/PUT/DELETE) | Lecture seule en plus (GET) |", "|---|---|---|"]
+    matrix = ["| Service | Write (POST/PUT/DELETE) | Additional read-only (GET) |", "|---|---|---|"]
     for s in services:
         matrix.append(f"| `{s.module}` | {', '.join(s.write_roles)} | {', '.join(s.read_roles) or '—'} |")
-    users = ["| Utilisateur | Mot de passe (dev) | Rôle |", "|---|---|---|"]
+    users = ["| User | Password (dev) | Role |", "|---|---|---|"]
     users += [f"| `{r}` | `{dev_password(r)}` | {r} |" for r in roles]
     return {
         "KEYCLOAK_REALM": realm, "KEYCLOAK_CLIENT_ID": client_id,
@@ -549,7 +538,7 @@ def k8s_keycloak(realm_doc: str) -> str:
         "          env:\n"
         "            - name: KEYCLOAK_ADMIN\n              valueFrom:\n                secretKeyRef:\n                  name: app-secret\n                  key: KEYCLOAK_ADMIN\n"
         "            - name: KEYCLOAK_ADMIN_PASSWORD\n              valueFrom:\n                secretKeyRef:\n                  name: app-secret\n                  key: KEYCLOAK_ADMIN_PASSWORD\n"
-        "            # URL publique vue par le navigateur (kubectl port-forward svc/keycloak 8180:8080).\n"
+        "            # Public URL seen by the browser (kubectl port-forward svc/keycloak 8180:8080).\n"
         "            - {name: KC_HOSTNAME, value: \"http://localhost:8180\"}\n"
         "            - {name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC, value: \"true\"}\n"
         "            - {name: KC_HTTP_ENABLED, value: \"true\"}\n"
@@ -569,7 +558,7 @@ def k8s_app(name: str, project: str, port: int, *, wait_for_config: bool = False
             mount: tuple[str, str, str] | None = None) -> str:
     image = image or f"{project}/{name}:{IMAGE_TAG}"
     mount_block = volumes_block = ""
-    if mount:  # (nom de ConfigMap, cle, chemin dans le conteneur) monte via subPath
+    if mount:  # (ConfigMap name, key, container path) mounted through subPath
         cm_name, cm_key, cm_path = mount
         mount_block = (
             "          volumeMounts:\n"
@@ -589,10 +578,10 @@ def k8s_app(name: str, project: str, port: int, *, wait_for_config: bool = False
             "      initContainers:\n"
             "        - name: wait-for-config-server\n"
             "          image: busybox:1.36\n"
-            "          command: [\"sh\", \"-c\", \"until wget -q -O /dev/null http://config-server:8888/actuator/health; do echo attente config-server; sleep 3; done\"]\n"
+            "          command: [\"sh\", \"-c\", \"until wget -q -O /dev/null http://config-server:8888/actuator/health; do echo waiting for config-server; sleep 3; done\"]\n"
         )
     env_from = ""
-    if probe_path is None:  # applications Spring : configuration commune
+    if probe_path is None:  # Spring applications: shared configuration
         env_from = (
             "          envFrom:\n"
             "            - configMapRef:\n                name: app-config\n"
@@ -652,8 +641,8 @@ def k8s_manifests(project: str, services: list[Service], init_sql: str,
         f"  KEYCLOAK_JWKS: http://keycloak:8080/realms/{realm}/protocol/openid-connect/certs\n"
     )
     files["secret.yaml"] = (
-        "# ATTENTION : valeurs de DEVELOPPEMENT en clair. En production, utiliser Sealed Secrets,\n"
-        "# External Secrets ou Vault et ne jamais committer de vrais identifiants.\n"
+        "# WARNING: plain DEVELOPMENT values. In production, use Sealed Secrets,\n"
+        "# External Secrets or Vault and never commit real credentials.\n"
         "apiVersion: v1\nkind: Secret\nmetadata:\n  name: app-secret\ntype: Opaque\n"
         "stringData:\n  DB_USER: postgres\n  DB_PASSWORD: postgres\n"
         "  KEYCLOAK_ADMIN: admin\n  KEYCLOAK_ADMIN_PASSWORD: admin\n"
@@ -718,7 +707,7 @@ def k8s_manifests(project: str, services: list[Service], init_sql: str,
         "spec:\n  selector:\n    app: kafka\n  ports:\n    - port: 9092\n      targetPort: 9092\n"
     )
     files["elk.yaml"] = (
-        "# Stack ELK minimale (instance unique, securite desactivee : DEV uniquement).\n"
+        "# Minimal ELK stack (single instance, security disabled: DEV only).\n"
         "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: elasticsearch\n"
         "spec:\n  serviceName: elasticsearch\n  replicas: 1\n"
         "  selector:\n    matchLabels:\n      app: elasticsearch\n"
@@ -781,8 +770,8 @@ def k8s_manifests(project: str, services: list[Service], init_sql: str,
     for s in services:
         files[f"{s.module}.yaml"] = k8s_app(s.module, project, s.port, wait_for_config=True)
     files["frontend.yaml"] = (
-        "# Configuration d'execution du front (voir frontend/src/config.js). Keycloak est joint par le\n"
-        "# navigateur : ici via kubectl port-forward svc/keycloak 8180:8080 ; adapter avec un Ingress.\n"
+        "# Front runtime configuration (see frontend/src/config.js). Keycloak is reached by the browser:\n"
+        "# here through kubectl port-forward svc/keycloak 8180:8080; adapt with an Ingress.\n"
         "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: frontend-config\n"
         "data:\n  config.js: |\n"
         "    window.APP_CONFIG = {\n"
@@ -810,7 +799,7 @@ def k8s_manifests(project: str, services: list[Service], init_sql: str,
         "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\n"
         f"namespace: {project}\n"
         "resources:\n" + "".join(f"  - {r}\n" for r in resources) + "\n"
-        "# Pour utiliser un registre distant, decommenter et adapter :\n"
+        "# To use a remote registry, uncomment and adapt:\n"
         "# images:\n"
         f"#   - name: {project}/api-gateway\n"
         "#     newName: registry.example.com/team/api-gateway\n"
@@ -819,7 +808,7 @@ def k8s_manifests(project: str, services: list[Service], init_sql: str,
     return files
 
 
-# --- tableaux et diagrammes pour la documentation ---------------------------------------------
+# --- tables and diagrams for the documentation ------------------------------------------------
 def doc_tokens(services: list[Service]) -> dict[str, str]:
     first = services[0]
     mermaid_services, mermaid_kafka = [], []
@@ -834,21 +823,21 @@ def doc_tokens(services: list[Service]) -> dict[str, str]:
     for s in services[1:]:
         mermaid_kafka.append(f"  kafka -->|{first.topic}| s{s.index}")
 
-    services_table = ["| Module | Port | Route (via gateway) | Base | Topic publié | Topic consommé |",
+    services_table = ["| Module | Port | Route (through gateway) | Database | Published topic | Consumed topic |",
                       "|---|---|---|---|---|---|"]
     for s in services:
         consumed = "—" if s is first else f"`{first.topic}`"
         services_table.append(
             f"| `{s.module}` | {s.port} | `/api/{s.resource}/**` | `{s.db}` | `{s.topic}` | {consumed} |")
 
-    topics_table = ["| Topic | Producteur | Consommateurs | Partitions | Clé |", "|---|---|---|---|---|"]
+    topics_table = ["| Topic | Producer | Consumers | Partitions | Key |", "|---|---|---|---|---|"]
     for s in services:
-        consumers = ", ".join(f"`{c.module}`" for c in services[1:]) if s is first else "_aucun pour l'instant_"
+        consumers = ", ".join(f"`{c.module}`" for c in services[1:]) if s is first else "_none yet_"
         if s is first and len(services) == 1:
-            consumers = "_aucun pour l'instant_"
-        topics_table.append(f"| `{s.topic}` | `{s.module}` | {consumers} | 3 | UUID de l'agrégat |")
+            consumers = "_none yet_"
+        topics_table.append(f"| `{s.topic}` | `{s.module}` | {consumers} | 3 | aggregate UUID |")
 
-    db_table = ["| Base | Service propriétaire | Table initiale |", "|---|---|---|"]
+    db_table = ["| Database | Owning service | Initial table |", "|---|---|---|"]
     for s in services:
         db_table.append(f"| `{s.db}` | `{s.module}` | `{s.table}` (migration `V1__init.sql`) |")
 
@@ -863,56 +852,56 @@ def doc_tokens(services: list[Service]) -> dict[str, str]:
     }
 
 
-# --- programme principal ----------------------------------------------------------------------
+# --- main program -----------------------------------------------------------------------------
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--project", required=True, help="nom du projet en kebab-case (ex. shopflow)")
-    parser.add_argument("--title", help="titre lisible (defaut : derive du nom)")
-    parser.add_argument("--domain", default="Application microservices", help="domaine metier en une phrase")
-    parser.add_argument("--group-id", help="groupId Java (defaut : com.example.<projet>)")
+    parser.add_argument("--project", required=True, help="project name in kebab-case (e.g. shopflow)")
+    parser.add_argument("--title", help="readable title (default: derived from the name)")
+    parser.add_argument("--domain", default="Microservices application", help="business domain in one sentence")
+    parser.add_argument("--group-id", help="Java groupId (default: com.example.<project>)")
     parser.add_argument("--services", default="order:8081,notification:8082",
-                        help="liste separee par des virgules de nom[:port][:w=role+role][:r=role+role] ; "
-                             "le premier service publie, les suivants consomment ; w = roles autorises a ecrire, "
-                             "r = roles en lecture seule (defaut : 1er role ecrit, les autres lisent)")
+                        help="comma-separated list of name[:port][:w=role+role][:r=role+role]; "
+                             "the first service publishes, the others consume; w = roles allowed to write, "
+                             "r = read-only roles (default: 1st role writes, the others read)")
     parser.add_argument("--roles", default="admin,user",
-                        help="roles Keycloak du realm, separes par des virgules (ex. dispatcher,merchant,courier,customer)")
-    parser.add_argument("--out", help="dossier de sortie (defaut : ./<projet>)")
-    parser.add_argument("--force", action="store_true", help="autorise l'ecriture dans un dossier non vide")
+                        help="Keycloak realm roles, comma-separated (e.g. dispatcher,merchant,courier,customer)")
+    parser.add_argument("--out", help="output folder (default: ./<project>)")
+    parser.add_argument("--force", action="store_true", help="allow writing into a non-empty folder")
     args = parser.parse_args()
 
     if not KEBAB.match(args.project):
-        fail("--project doit etre en kebab-case (lettres minuscules, chiffres, tirets ; commence par une lettre)")
+        fail("--project must be kebab-case (lowercase letters, digits, hyphens; starts with a letter)")
     title = args.title or args.project.replace("-", " ").title()
     for label, value in (("--title", title), ("--domain", args.domain)):
         if re.search(r"[\"'\\&<>]", value):
-            fail(f"{label} ne doit pas contenir de guillemets, antislash, & < > (le texte est injecte dans XML/TS/YAML)")
+            fail(f"{label} must not contain quotes, backslashes, & < > (the text goes into XML/TS/YAML)")
     group_id = args.group_id or f"com.example.{args.project.replace('-', '')}"
     if not re.match(r"^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+$", group_id):
-        fail("--group-id invalide (ex. com.acme.shopflow, minuscules, au moins deux segments)")
+        fail("invalid --group-id (e.g. com.acme.shopflow, lowercase, at least two segments)")
 
     specs = [x for x in args.services.split(",") if x.strip()]
     if not specs:
-        fail("--services ne peut pas etre vide")
+        fail("--services cannot be empty")
     roles = [r.strip() for r in args.roles.split(",") if r.strip()]
     if not roles or len(set(roles)) != len(roles) or not all(re.match(r"^[a-z][a-z0-9_-]*$", r) for r in roles):
-        fail("--roles : liste non vide de noms uniques en minuscules (lettres, chiffres, - ou _)")
+        fail("--roles: non-empty list of unique lowercase names (letters, digits, - or _)")
     realm = args.project
     client_id = f"{realm}-frontend"
     services = [Service(spec, i, group_id, roles) for i, spec in enumerate(specs)]
     names = [s.name for s in services]
     if len(set(names)) != len(names):
-        fail("noms de services en double")
+        fail("duplicate service names")
     ports = {}
     for s in services:
         if s.port in RESERVED_PORTS:
-            fail(f"port {s.port} deja utilise par {RESERVED_PORTS[s.port]}")
+            fail(f"port {s.port} already used by {RESERVED_PORTS[s.port]}")
         if s.port in ports:
-            fail(f"port {s.port} utilise par {ports[s.port]} et {s.module}")
+            fail(f"port {s.port} used by {ports[s.port]} and {s.module}")
         ports[s.port] = s.module
 
     out = Path(args.out or args.project).resolve()
     if out.exists() and any(out.iterdir()) and not args.force:
-        fail(f"{out} n'est pas vide (utiliser --force pour ecrire quand meme)")
+        fail(f"{out} is not empty (use --force to write anyway)")
     out.mkdir(parents=True, exist_ok=True)
 
     date = datetime.date.today().isoformat()
@@ -971,25 +960,25 @@ def main() -> None:
     for name, content in k8s_manifests(args.project, services, init_sql, logstash_conf, realm, realm_doc).items():
         w.write(f"k8s/{name}", content)
 
-    # Controle : aucun jeton non resolu.
+    # Check: no unresolved token.
     leftovers = []
     for f in w.files:
         rel = f.relative_to(out).as_posix()
         if re.search(r"__[A-Z_]+__", rel):
-            leftovers.append(f"chemin : {rel}")
+            leftovers.append(f"path: {rel}")
         text = f.read_text(encoding="utf-8")
         for m in re.finditer(r"@@[A-Z_]+@@", text):
-            leftovers.append(f"{rel} : {m.group(0)}")
+            leftovers.append(f"{rel}: {m.group(0)}")
     if leftovers:
-        print("Jetons non resolus :\n  " + "\n  ".join(leftovers), file=sys.stderr)
+        print("Unresolved tokens:\n  " + "\n  ".join(leftovers), file=sys.stderr)
         sys.exit(2)
 
-    print(f"OK : {len(w.files)} fichiers generes dans {out}")
+    print(f"OK: {len(w.files)} files generated in {out}")
     print(f"  groupId     : {group_id}")
     print("  services    : " + ", ".join(f"{s.module}:{s.port}" for s in services))
-    print(f"  keycloak    : realm '{realm}', roles {', '.join(roles)} (comptes de dev : voir docs/architecture/06-securite.md)")
-    print("  flux Kafka  : " + f"{first.module} -> {first.topic} -> " + ", ".join(s.module for s in services[1:]) if len(services) > 1 else "  flux Kafka  : (un seul service, aucun consommateur)")
-    print("Etape suivante : rediger docs/produit/ et docs/sprints/ (voir references/agile-docs.md).")
+    print(f"  keycloak    : realm '{realm}', roles {', '.join(roles)} (dev accounts: see docs/architecture/06-security.md)")
+    print("  Kafka flow  : " + f"{first.module} -> {first.topic} -> " + ", ".join(s.module for s in services[1:]) if len(services) > 1 else "  Kafka flow  : (single service, no consumer)")
+    print("Next step: write docs/product/ and docs/sprints/ (see references/agile-docs.md).")
 
 
 if __name__ == "__main__":

@@ -22,7 +22,7 @@ public class @@ENTITY@@Service {
     @Transactional
     public @@ENTITY@@ create(String name) {
         @@ENTITY@@ saved = repository.save(new @@ENTITY@@(name));
-        // Publie en interne ; l'envoi Kafka n'a lieu qu'apres le commit (voir ...EventPublisher).
+        // Published internally; the Kafka send happens only after commit (see ...EventPublisher).
         events.publishEvent(@@ENTITY@@CreatedEvent.from(saved));
         return saved;
     }

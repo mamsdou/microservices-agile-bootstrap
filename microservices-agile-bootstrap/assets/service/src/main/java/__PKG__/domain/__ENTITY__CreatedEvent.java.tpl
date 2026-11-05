@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Evenement de domaine, publie sur Kafka (topic "@@TOPIC@@") apres validation de la transaction.
- * C'est un contrat entre services : le faire evoluer de maniere retrocompatible.
+ * Domain event, published to Kafka (topic "@@TOPIC@@") after the transaction commits.
+ * This is a contract between services: evolve it in a backward-compatible way.
  */
 public record @@ENTITY@@CreatedEvent(UUID id, String name, Instant occurredAt) {
 

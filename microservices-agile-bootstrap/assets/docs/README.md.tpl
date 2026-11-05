@@ -1,32 +1,32 @@
 # Documentation — @@PROJECT_TITLE@@
 
-Date de génération : @@DATE@@. Documentation vivante : toute modification structurante du produit ou de l'architecture met à jour ces pages (voir la Definition of Done).
+Generated on @@DATE@@. Living documentation: any structural change to the product or architecture updates these pages (see the Definition of Done).
 
-## Produit (Scrum)
+## Product (Scrum)
 
-| Document | Rôle |
+| Document | Purpose |
 |---|---|
-| `produit/vision.md` | Pourquoi ce produit, pour qui, comment on mesure le succès |
-| `produit/roadmap.md` | Releases et jalons |
-| `produit/product-backlog.md` | Épics et user stories ordonnées par valeur |
-| `produit/risques.md` | Registre des risques |
-| `sprints/sprint-0.md` | Fondations techniques |
-| `sprints/sprint-1-planning.md` | Premier sprint de valeur |
+| `product/vision.md` | Why this product, for whom, how success is measured |
+| `product/roadmap.md` | Releases and milestones |
+| `product/product-backlog.md` | Epics and user stories ordered by value |
+| `product/risks.md` | Risk register |
+| `sprints/sprint-0.md` | Technical foundations |
+| `sprints/sprint-1-planning.md` | First value sprint |
 
-## Équipe et pratiques agiles
+## Team and agile practices
 
 - [Definition of Ready](agile/definition-of-ready.md)
 - [Definition of Done](agile/definition-of-done.md)
-- [Charte de fonctionnement : rôles, cérémonies, métriques](agile/working-agreement.md)
-- [Stratégie de test](qualite/strategie-de-test.md)
+- [Working agreement: roles, ceremonies, metrics](agile/working-agreement.md)
+- [Test strategy](quality/test-strategy.md)
 
 ## Architecture
 
-- [00 — Vue d'ensemble](architecture/00-vue-ensemble.md)
-- [01 — Services et ports](architecture/01-services.md)
-- [02 — Événements Kafka](architecture/02-evenements-kafka.md)
-- [03 — Données](architecture/03-donnees.md)
-- [04 — Observabilité (ELK)](architecture/04-observabilite.md)
-- [05 — Déploiement (Docker, Kubernetes)](architecture/05-deploiement.md)
-- [06 — Sécurité (Keycloak, JWT, rôles)](architecture/06-securite.md)
-- [Décisions d'architecture (ADR)](adr/README.md)
+- [00 — Overview](architecture/00-overview.md)
+- [01 — Services and ports](architecture/01-services.md)
+- [02 — Kafka events](architecture/02-kafka-events.md)
+- [03 — Data](architecture/03-data.md)
+- [04 — Observability (ELK)](architecture/04-observability.md)
+- [05 — Deployment (Docker, Kubernetes)](architecture/05-deployment.md)
+- [06 — Security (Keycloak, JWT, roles)](architecture/06-security.md)
+- [Architecture decisions (ADR)](adr/README.md)

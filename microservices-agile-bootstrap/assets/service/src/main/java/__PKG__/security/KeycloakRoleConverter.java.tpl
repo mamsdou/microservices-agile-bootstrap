@@ -9,8 +9,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
- * Transforme les roles de realm Keycloak (claim "realm_access.roles") en autorites Spring
- * "ROLE_<nom>", utilisables avec hasRole / hasAnyRole.
+ * Converts Keycloak realm roles (claim "realm_access.roles") into Spring authorities
+ * "ROLE_<name>", usable with hasRole / hasAnyRole.
  */
 public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
 

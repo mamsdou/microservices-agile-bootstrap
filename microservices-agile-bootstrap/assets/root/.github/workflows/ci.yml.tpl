@@ -15,7 +15,7 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - name: Build et tests unitaires
+      - name: Build and unit tests
         run: mvn -B verify
 
   frontend:
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Valider docker-compose
+      - name: Validate docker-compose
         run: docker compose config -q
-      - name: Valider les manifests Kubernetes
+      - name: Validate Kubernetes manifests
         run: kubectl kustomize k8s > /dev/null
