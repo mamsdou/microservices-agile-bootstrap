@@ -12,10 +12,10 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * Envoie l'evenement sur Kafka uniquement apres le commit de la transaction : on ne publie jamais
- * un evenement pour une donnee qui n'a finalement pas ete enregistree.
- * Limite connue : si Kafka est indisponible a cet instant, l'evenement est perdu (voir ADR-0005,
- * le pattern Outbox est la solution cible).
+ * Sends the event to Kafka only after the transaction commits: an event is never published
+ * for data that was not actually saved.
+ * Known limitation: if Kafka is unavailable at that moment, the event is lost (see ADR-0005;
+ * the Outbox pattern is the target solution).
  */
 @Component
 public class @@ENTITY@@EventPublisher {
@@ -40,9 +40,9 @@ public class @@ENTITY@@EventPublisher {
         kafka.send(topic, event.id().toString(), payload)
              .whenComplete((result, error) -> {
                  if (error != null) {
-                     log.error("Echec de publication sur {} (id={})", topic, event.id(), error);
+                     log.error("Failed to publish to {} (id={})", topic, event.id(), error);
                  } else {
-                     log.info("Evenement publie sur {} (id={})", topic, event.id());
+                     log.info("Event published to {} (id={})", topic, event.id());
                  }
              });
     }

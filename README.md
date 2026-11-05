@@ -1,168 +1,137 @@
 # microservices-agile-bootstrap
 
-**Un skill [Claude Code](https://claude.com/claude-code) (et un générateur Python autonome) qui met en place en une commande une application en architecture microservices — Spring Boot 3 / Java 21, Spring Cloud, Angular 15, Kafka, PostgreSQL, ELK, Keycloak, Docker, Kubernetes — avec une documentation de projet claire, organisée selon Scrum.**
+**A [Claude Code](https://claude.com/claude-code) skill (and standalone Python generator) that sets up a microservices application in one command — Spring Boot 3 / Java 21, Spring Cloud, Angular 15, Kafka, PostgreSQL, ELK, Keycloak, Docker, Kubernetes — with clear project documentation organized around Scrum.**
 
-> **English summary** — Generates a runnable microservices skeleton (Spring Boot 3 + Java 21, Spring Cloud Config/Eureka/Gateway, Angular 15, Kafka, PostgreSQL one-DB-per-service, ELK, Keycloak OIDC/JWT with role-based access, Docker Compose, Kubernetes/kustomize, GitHub Actions CI) plus ready-to-use Scrum documentation (ADRs, Definition of Ready/Done, architecture docs, product backlog guidance). Use it as a Claude Code skill, or run `scripts/scaffold.py` directly with Python 3.10+. Generated docs are in French. See [Limitations](#limites-et-ce-qui-a-été-vérifié).
+> This is the English edition (v0.2.0). The French edition stays available at tag [`v0.1.0`](https://github.com/mamsdou/microservices-agile-bootstrap/tree/v0.1.0). See [CHANGELOG.md](CHANGELOG.md).
 
----
+## What it is for
 
-## À quoi ça sert
+Starting a microservices project takes days of plumbing before the first line of business code: Maven parent, Config Server, registry, gateway, databases, event bus, centralized logs, authentication, containers, Kubernetes manifests, CI… then all of it must be documented and the work organized into sprints.
 
-Démarrer un projet microservices demande des jours de plomberie avant la première ligne de code métier : parent Maven, Config Server, registre, passerelle, bases de données, bus d'événements, logs centralisés, authentification, conteneurs, manifests Kubernetes, CI… puis il faut documenter tout cela et organiser le travail en sprints.
+This skill does both:
 
-Ce skill fait les deux :
+1. **A coherent skeleton** from a deterministic generator (same parameters, same result).
+2. **Documentation ready for an agile team**: architecture decisions (ADRs), Definition of Ready / Done, Scrum working agreement, test strategy, and — written by Claude from your business domain — product vision, roadmap, product backlog as user stories, Sprint 0 / 1, risk register.
 
-1. **Un squelette exécutable et cohérent** (générateur déterministe, toujours le même résultat pour les mêmes paramètres).
-2. **Une documentation prête pour une équipe agile** : décisions d'architecture (ADR), Definition of Ready / Done, charte Scrum, stratégie de test, et — rédigés par Claude à partir de votre domaine métier — vision produit, roadmap, product backlog en user stories, Sprint 0 / Sprint 1, registre des risques.
-
-## Ce qui est généré
+## What is generated
 
 ```
-mon-projet/
-├── pom.xml                  # parent Maven : Java 21, Spring Boot 3.3, Spring Cloud 2023.0
-├── config-server/           # configuration centralisée (config-repo/ : un fichier par service)
-├── discovery-server/        # registre Eureka
-├── api-gateway/             # point d'entrée unique, exige un JWT valide sur /api/**
-├── services/<nom>-service/  # un microservice par domaine : REST, JPA + Flyway, Kafka, sécurité par rôle
-├── frontend/                # Angular 15 + connexion OIDC (nginx en conteneur)
-├── infra/                   # Dockerfile Java, pipeline Logstash, init PostgreSQL, realm Keycloak
-├── k8s/                     # manifests Kubernetes (kustomize)
-├── docker-compose.yml       # PostgreSQL, Kafka (KRaft), Kafka UI, ELK, Keycloak + les services
-├── .github/workflows/ci.yml # build Maven + Angular, validation compose/k8s
-└── docs/                    # architecture, ADR, agile, qualité (+ produit et sprints rédigés par Claude)
+my-project/
+├── pom.xml                  # Maven parent: Java 21, Spring Boot 3.3, Spring Cloud 2023.0
+├── config-server/           # centralized configuration (config-repo/: one file per service)
+├── discovery-server/        # Eureka registry
+├── api-gateway/             # single entry point, requires a valid JWT on /api/**
+├── services/<name>-service/ # one microservice per domain: REST, JPA + Flyway, Kafka, role-based security
+├── frontend/                # Angular 15 + OIDC login (nginx in a container)
+├── infra/                   # Java Dockerfile, Logstash pipeline, PostgreSQL init, Keycloak realm
+├── k8s/                     # Kubernetes manifests (kustomize)
+├── docker-compose.yml       # PostgreSQL, Kafka (KRaft), Kafka UI, ELK, Keycloak + the services
+├── .github/workflows/ci.yml # Maven + Angular build, compose/k8s validation
+└── docs/                    # architecture, ADR, agile, quality (+ product and sprints written by Claude)
 ```
 
-Détails de chaque microservice généré :
+Each generated microservice includes:
 
-- API REST `GET`/`POST /api/<ressource>` avec validation, accès par rôle (401 / 403), tests unitaires et tests de sécurité ;
-- une **base PostgreSQL par service**, schéma versionné avec Flyway ;
-- publication d'un événement Kafka **après commit** (`@TransactionalEventListener`), consommation idempotente à compléter ;
-- logs JSON envoyés vers Logstash → Elasticsearch → Kibana ;
-- sondes de santé (Actuator) prêtes pour Kubernetes.
+- a `GET`/`POST /api/<resource>` REST API with validation, role-based access (401 / 403), unit and security tests;
+- **one PostgreSQL database per service**, with a Flyway-versioned schema;
+- Kafka event publishing **after commit** (`@TransactionalEventListener`), idempotent consumption to complete;
+- JSON logs sent to Logstash → Elasticsearch → Kibana;
+- Actuator health probes ready for Kubernetes.
 
-## Prérequis
+## Requirements
 
-| Pour… | Il faut |
+| To… | You need |
 |---|---|
-| utiliser le skill | [Claude Code](https://claude.com/claude-code) (ou toute application Claude qui prend en charge les skills) |
-| lancer le générateur seul | Python **3.10+** (aucune dépendance externe) |
-| construire le projet généré | JDK 21, Maven 3.9+, Node 18 (Angular 15), Docker |
-| lancer toute la stack en local | Docker avec environ **6 à 8 Go de RAM** disponibles |
+| use the skill | [Claude Code](https://claude.com/claude-code) (or any Claude application that supports skills) |
+| run the generator alone | Python **3.10+** (no external dependency) |
+| build the generated project | JDK 21, Maven 3.9+, Node 18 (Angular 15), Docker |
+| run the full stack locally | Docker with about **6 to 8 GB of RAM** available |
 
 ## Installation
 
-### Comme skill Claude Code
+### As a Claude Code skill
 
 ```bash
 git clone https://github.com/mamsdou/microservices-agile-bootstrap.git
 cp -r microservices-agile-bootstrap/microservices-agile-bootstrap ~/.claude/skills/
 ```
 
-Sous Windows (PowerShell) :
+On Windows (PowerShell):
 
 ```powershell
 git clone https://github.com/mamsdou/microservices-agile-bootstrap.git
 Copy-Item -Recurse microservices-agile-bootstrap\microservices-agile-bootstrap $env:USERPROFILE\.claude\skills\
 ```
 
-Pour limiter le skill à un projet, copiez le dossier dans `<projet>/.claude/skills/` à la place. Redémarrez Claude Code : le skill est détecté automatiquement.
+To limit the skill to one project, copy the folder to `<project>/.claude/skills/` instead. Restart Claude Code: the skill is detected automatically.
 
-### Sans Claude (générateur seul)
+### Without Claude (generator only)
 
-Le dossier `microservices-agile-bootstrap/scripts/scaffold.py` fonctionne tout seul. Dans ce cas seule la partie technique et les documents d'architecture/agile « génériques » sont produits ; les documents produit (vision, backlog…) restent à écrire.
+`microservices-agile-bootstrap/scripts/scaffold.py` works on its own. In that case only the technical part and the generic architecture/agile documents are produced; product documents (vision, backlog…) remain to be written.
 
-## Utilisation
+## Usage
 
-### Avec Claude Code
+### With Claude Code
 
-Décrivez simplement votre projet, par exemple :
+Simply describe your project, for example:
 
-> « Mets en place une application de livraison en microservices avec Spring Cloud, Angular, Kafka, PostgreSQL, Keycloak, Docker et Kubernetes, et la documentation Scrum. »
+> "Set up a delivery application with microservices using Spring Cloud, Angular, Kafka, PostgreSQL, Keycloak, Docker and Kubernetes, with the Scrum documentation."
 
-Claude déduit les services et les rôles de votre domaine, lance le générateur, rédige les documents produit (vision, roadmap, backlog en user stories avec critères d'acceptation, Sprint 0/1, risques), puis vérifie ce qui peut l'être (compose, kustomize, build Maven/Angular) et vous dit honnêtement ce qui ne l'a pas été.
+Claude derives the services and roles from your domain, runs the generator, writes the product documents, then checks what it can and tells you what was not checked.
 
-### Avec le script
+### With the script
 
 ```bash
 python microservices-agile-bootstrap/scripts/scaffold.py \
-  --project livraison --title "Livraison" \
-  --domain "Application de livraison : commande, affectation de livreurs, suivi" \
-  --group-id com.exemple.livraison \
+  --project delivery --title "Delivery" \
+  --domain "Delivery application: orders, courier assignment, tracking" \
+  --group-id com.example.delivery \
   --roles dispatcher,merchant,courier,customer \
   --services "order:8081:w=merchant+dispatcher:r=customer,delivery:8082:w=dispatcher+courier:r=merchant,courier:8083:w=dispatcher+courier,notification:8084:w=dispatcher:r=customer" \
-  --out ./livraison
+  --out ./delivery
 ```
 
-| Option | Rôle |
+| Option | Purpose |
 |---|---|
-| `--project` | Nom du projet en kebab-case (sert aussi de nom de realm Keycloak) |
-| `--title` / `--domain` | Titre lisible et description du domaine métier en une phrase |
-| `--group-id` | `groupId` Java (défaut `com.example.<projet>`) |
-| `--roles` | Rôles Keycloak du realm, séparés par des virgules (défaut `admin,user`) |
-| `--services` | `nom[:port][:w=role+role][:r=role+role]` séparés par des virgules. `w` = rôles autorisés à écrire (et lire), `r` = rôles en lecture seule. Le **premier** service publie sur Kafka, les suivants consomment |
-| `--out` | Dossier de sortie ; refuse d'écraser un dossier non vide sauf `--force` |
+| `--project` | Project name in kebab-case (also the Keycloak realm name) |
+| `--title` / `--domain` | Readable title and one-sentence business domain |
+| `--group-id` | Java `groupId` (default `com.example.<project>`) |
+| `--roles` | Keycloak realm roles, comma-separated (default `admin,user`) |
+| `--services` | Comma-separated `name[:port][:w=role+role][:r=role+role]`. `w` = roles allowed to write (and read), `r` = read-only roles. The **first** service publishes to Kafka, the others consume |
+| `--out` | Output folder; refuses to overwrite a non-empty folder unless `--force` is passed |
 
-Puis, dans le projet généré :
+Then, in the generated project:
 
 ```bash
-docker compose up -d --build     # stack complète
+docker compose up -d --build     # full stack
 ```
 
-| Élément | URL |
+| Component | URL |
 |---|---|
-| Application Angular | http://localhost:4200 |
+| Angular application | http://localhost:4200 |
 | API Gateway | http://localhost:8080 |
 | Keycloak | http://localhost:8180 |
 | Eureka / Config Server | http://localhost:8761 / http://localhost:8888 |
 | Kibana / Kafka UI | http://localhost:5601 / http://localhost:8090 |
 
-Les comptes de **développement** (un par rôle) sont listés dans `docs/architecture/06-securite.md` du projet généré.
+**Development** accounts (one per role) are listed in `docs/architecture/06-security.md` of the generated project.
 
-## Documentation agile produite
+## Limitations and what has been verified
 
-| Dossier | Contenu |
-|---|---|
-| `docs/adr/` | 10 décisions d'architecture (microservices, Spring Cloud, base par service, Kafka, publication après commit, ELK, Angular, Docker/K8s, monorepo, Keycloak) |
-| `docs/architecture/` | Vue d'ensemble (diagramme Mermaid), services et ports, événements Kafka, données, observabilité, déploiement, sécurité |
-| `docs/agile/` | Definition of Ready, Definition of Done, charte d'équipe (rôles, cérémonies, estimation) |
-| `docs/qualite/` | Stratégie de test |
-| `docs/produit/` et `docs/sprints/` | Vision, roadmap, product backlog, risques, Sprint 0 et 1 — **rédigés par Claude** selon [`references/agile-docs.md`](microservices-agile-bootstrap/references/agile-docs.md) |
+- ✅ v0.1.0 (French edition) verified: the generator, `docker compose config` and `kubectl kustomize` on the generated files, `mvn verify` and production `ng build`, and the Config Server and secured gateway actually started (401 without a token, health 200, CORS).
+- ✅ v0.2.0 verified: the generator, the absence of leftover tokens, YAML parsing and `docker compose config`. It changes text, the Compose port bindings, and a Dockerfile cleanup step.
+- ⚠️ **Not verified**: `mvn verify` and `ng build` on v0.2.0, full Docker stack startup, **Keycloak startup** (realm import, `KC_HOSTNAME` issuer URL), the end-to-end Angular login flow, and compilation under **JDK 21**. If you validate them, an issue or PR is welcome.
+- The skeleton is a **starting point**: the entity generated per service is deliberately generic, Kafka consumers only log, Keycloak runs in dev mode (H2 database, HTTP) and secrets are dev values. See "To harden before production" in the generated docs.
+- Roles protect access to resources but not **data ownership**: handle it per business story.
+- Angular 15 is no longer actively supported. Versions are grouped at the top of `scaffold.py` and are updated together.
 
-## Limites et ce qui a été vérifié
+## Customizing
 
-Soyons transparents sur l'état actuel (version 0.1) :
+- **Versions**: constants at the top of [`scripts/scaffold.py`](microservices-agile-bootstrap/scripts/scaffold.py).
+- **Generated code, infra and docs**: templates in [`assets/`](microservices-agile-bootstrap/assets) (`.tpl` suffix, `@@NAME@@` tokens in files, `__NAME__` in paths).
+- **Architecture decisions**: [`scripts/adrs.py`](microservices-agile-bootstrap/scripts/adrs.py).
+- **Claude's behavior**: [`SKILL.md`](microservices-agile-bootstrap/SKILL.md) and [`references/`](microservices-agile-bootstrap/references).
 
-- ✅ Vérifié : le générateur (plusieurs configurations, cas d'erreur), `docker compose config` et `kubectl kustomize` sur les fichiers générés, `mvn verify` (tests unitaires et de sécurité) et `ng build` en production, le Config Server et la passerelle sécurisée démarrés pour de vrai (401 sans jeton, santé en 200, CORS).
-- ⚠️ **Non vérifié** : le démarrage complet de la stack Docker, le **démarrage de Keycloak** (import du realm, healthcheck, URL d'émetteur `KC_HOSTNAME`), le parcours de connexion Angular de bout en bout, et la compilation sous **JDK 21** (la vérification a été faite avec un JDK 17 en surchargeant `java.version`). Si vous les validez, une issue ou une PR est la bienvenue.
-- Le squelette est un **point de départ** : l'entité générée par service (nom, date) est volontairement générique, les consommateurs Kafka se contentent de journaliser, Keycloak tourne en mode développement (base H2, HTTP) et les secrets sont des valeurs de dev. Voir « À durcir avant la production » dans les docs générées.
-- Les rôles protègent l'accès aux ressources mais pas la **propriété des données** (un utilisateur voit tout ce que son rôle peut lire) : à traiter par story métier.
-- Angular 15 n'est plus supporté activement ; les versions (Spring Boot 3.3.5 / Spring Cloud 2023.0.3, Keycloak 25, Elastic 8.15…) sont regroupées en tête de `scaffold.py` et se mettent à jour ensemble.
-- Les documents générés sont en français.
-
-## Personnaliser
-
-- **Versions** : constantes en tête de [`scripts/scaffold.py`](microservices-agile-bootstrap/scripts/scaffold.py).
-- **Code, infra et docs générés** : modèles dans [`assets/`](microservices-agile-bootstrap/assets) (suffixe `.tpl`, jetons `@@NOM@@` dans les fichiers, `__NOM__` dans les chemins).
-- **Décisions d'architecture** : [`scripts/adrs.py`](microservices-agile-bootstrap/scripts/adrs.py).
-- **Comportement de Claude** (questions posées, vérifications, rédaction du backlog) : [`SKILL.md`](microservices-agile-bootstrap/SKILL.md) et [`references/`](microservices-agile-bootstrap/references).
-
-## Structure du dépôt
-
-```
-.
-├── README.md
-├── LICENSE
-└── microservices-agile-bootstrap/   # le skill (à copier dans ~/.claude/skills/)
-    ├── SKILL.md                     # instructions pour Claude
-    ├── scripts/                     # scaffold.py (générateur) et adrs.py
-    ├── assets/                      # modèles du code, de l'infra et des docs
-    └── references/                  # structure des documents produit, repères d'architecture
-```
-
-## Contribuer
-
-Les issues et pull requests sont les bienvenues, en particulier : retours de test sous JDK 21 et sur la stack Docker complète, autres stacks (Gradle, Angular récent, Keycloak en production), et traductions des documents générés.
-
-## Licence
+## License
 
 [MIT](LICENSE)

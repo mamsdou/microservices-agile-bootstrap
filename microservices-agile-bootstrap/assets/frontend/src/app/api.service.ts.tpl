@@ -8,7 +8,7 @@ export interface Item {
   createdAt: string;
 }
 
-/** Acces generique aux ressources exposees par la passerelle (/api/<ressource>). */
+/** Generic access to the resources exposed by the gateway (/api/<resource>). */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   constructor(private readonly http: HttpClient) {}

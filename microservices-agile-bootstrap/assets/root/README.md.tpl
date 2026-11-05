@@ -2,33 +2,33 @@
 
 > @@DOMAIN@@
 
-Application en architecture **microservices** : Spring Boot 3 / Java 21, Spring Cloud (Config, Eureka, Gateway), Angular 15, Kafka, PostgreSQL, ELK, Docker et Kubernetes. Projet piloté en **Scrum** (voir `docs/`).
+**Microservices** application: Spring Boot 3 / Java 21, Spring Cloud (Config, Eureka, Gateway), Angular 15, Kafka, PostgreSQL, ELK, Docker and Kubernetes. Project run with **Scrum** (see `docs/`).
 
-## Contexte
+## Context
 
-_À compléter : vision en 3 lignes (voir `docs/produit/vision.md`)._
+_To complete: 3-line vision (see `docs/product/vision.md`)._
 
-## Démarrage rapide
+## Quick start
 
-Prérequis : Docker (avec ~6-8 Go de RAM disponibles pour la stack complète). Pour développer sans Docker : JDK 21, Maven 3.9+, Node 18.
+Prerequisites: Docker (with about 6-8 GB of RAM available for the full stack). To develop without Docker: JDK 21, Maven 3.9+, Node 18.
 
 ```bash
 docker compose up -d --build
 ```
 
-| Élément | URL |
+| Component | URL |
 |---|---|
 | Application (Angular) | http://localhost:4200 |
 | API Gateway | http://localhost:8080 |
-| Eureka (registre) | http://localhost:8761 |
+| Eureka (registry) | http://localhost:8761 |
 | Config Server | http://localhost:8888 |
 | Kibana (logs) | http://localhost:5601 |
 | Kafka UI | http://localhost:8090 |
-| Keycloak (authentification) | http://localhost:8180 |
+| Keycloak (authentication) | http://localhost:8180 |
 
-L'API est protégée : il faut un jeton JWT. Dans l'interface (http://localhost:4200), cliquer sur « Se connecter » (comptes de développement : voir [`docs/architecture/06-securite.md`](docs/architecture/06-securite.md)). Rôles du realm : @@ROLES_LIST@@.
+The API is protected: a JWT token is required. In the UI (http://localhost:4200), click "Sign in" (development accounts: see [`docs/architecture/06-security.md`](docs/architecture/06-security.md)). Realm roles: @@ROLES_LIST@@.
 
-Premier test de bout en bout en ligne de commande (nécessite `jq`) :
+First end-to-end test from the command line (requires `jq`):
 
 ```bash
 TOKEN=$(curl -s http://localhost:8180/realms/@@KEYCLOAK_REALM@@/protocol/openid-connect/token \
@@ -38,33 +38,33 @@ curl -X POST http://localhost:8080/api/@@FIRST_RESOURCE@@ -H "Authorization: Bea
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/@@FIRST_RESOURCE@@
 ```
 
-Puis observer la réaction du consommateur : `docker compose logs -f @@LAST_SERVICE@@`, ou dans Kibana (vue de données `logs-*`).
+Then watch the consumer react: `docker compose logs -f @@LAST_SERVICE@@`, or in Kibana (`logs-*` data view).
 
 ## Structure
 
 ```
 @@PROJECT@@/
-├── pom.xml                  # parent Maven (Java 21, Spring Boot, Spring Cloud)
-├── config-server/           # configuration centralisée (config-repo/)
-├── discovery-server/        # registre Eureka
-├── api-gateway/             # point d'entrée unique
-├── services/                # microservices métier (une base PostgreSQL chacun)
-├── frontend/                # Angular 15 (servi par nginx)
-├── infra/                   # Dockerfile Java, Logstash, init PostgreSQL
-├── k8s/                     # manifests Kubernetes (kustomize)
+├── pom.xml                  # Maven parent (Java 21, Spring Boot, Spring Cloud)
+├── config-server/           # centralized configuration (config-repo/)
+├── discovery-server/        # Eureka registry
+├── api-gateway/             # single entry point
+├── services/                # business microservices (one PostgreSQL database each)
+├── frontend/                # Angular 15 (served by nginx)
+├── infra/                   # Java Dockerfile, Logstash, PostgreSQL init, Keycloak realm
+├── k8s/                     # Kubernetes manifests (kustomize)
 ├── docker-compose.yml
-└── docs/                    # produit, agile, architecture, ADR, qualité
+└── docs/                    # product, agile, architecture, ADR, quality
 ```
 
 ## Documentation
 
-Index complet : [`docs/README.md`](docs/README.md). Pour contribuer : [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Full index: [`docs/README.md`](docs/README.md). To contribute: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## Commandes utiles
+## Useful commands
 
-| Commande | Effet |
+| Command | Effect |
 |---|---|
-| `mvn -B verify` | build + tests de tous les modules |
-| `docker compose up -d --build` / `down` | démarrer / arrêter la stack |
-| `make images` | construire les images Docker locales |
-| `kubectl apply -k k8s` | déployer sur Kubernetes (voir `docs/architecture/05-deploiement.md`) |
+| `mvn -B verify` | build + tests of all modules |
+| `docker compose up -d --build` / `down` | start / stop the stack |
+| `make images` | build local Docker images |
+| `kubectl apply -k k8s` | deploy to Kubernetes (see `docs/architecture/05-deployment.md`) |

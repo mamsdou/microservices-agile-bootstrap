@@ -43,7 +43,7 @@ export class AppComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.items = [];
-        this.error = this.message(err, 'Impossible de charger les donnees (la passerelle est-elle demarree ?).');
+        this.error = this.message(err, 'Could not load the data (is the gateway running?).');
       },
     });
   }
@@ -58,16 +58,16 @@ export class AppComponent implements OnInit {
         this.newName = '';
         this.load();
       },
-      error: (err: HttpErrorResponse) => (this.error = this.message(err, 'Creation impossible.')),
+      error: (err: HttpErrorResponse) => (this.error = this.message(err, 'Could not create the item.')),
     });
   }
 
   private message(err: HttpErrorResponse, fallback: string): string {
     if (err.status === 401) {
-      return 'Session expiree : reconnectez-vous.';
+      return 'Session expired: please sign in again.';
     }
     if (err.status === 403) {
-      return 'Acces refuse : votre role ne permet pas cette action.';
+      return 'Access denied: your role does not allow this action.';
     }
     return fallback;
   }

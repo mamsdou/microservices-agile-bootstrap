@@ -1,33 +1,35 @@
-# 01 — Services et ports
+# 01 — Services and ports
 
-## Services d'infrastructure
+## Infrastructure services
 
-| Module | Rôle | Port | Santé |
+| Module | Role | Port | Health |
 |---|---|---|---|
-| `config-server` | Configuration centralisée (`config-repo/`, backend `native`) | 8888 | `/actuator/health` |
-| `discovery-server` | Registre Eureka | 8761 | `/actuator/health` |
-| `api-gateway` | Point d'entrée unique, routage `/api/<ressource>/**`, CORS | 8080 | `/actuator/health` |
+| `config-server` | Centralized configuration (`config-repo/`, `native` backend) | 8888 | `/actuator/health` |
+| `discovery-server` | Eureka registry | 8761 | `/actuator/health` |
+| `api-gateway` | Single entry point, `/api/<resource>/**` routing, CORS | 8080 | `/actuator/health` |
 
-## Services métier
+## Business services
 
 @@SERVICES_TABLE@@
 
-Chaque service expose `GET`/`POST /api/<ressource>`, valide ses entrées, persiste via JPA/Flyway et publie un événement `<service>.events` après commit. Les services suivant le premier consomment les événements du premier (exemple de flux à remplacer par les vrais cas d'usage). L'entité générée par service (nom, date de création) est un **point de départ** à renommer et enrichir selon le domaine.
+Each service exposes `GET`/`POST /api/<resource>`, validates its input, persists through JPA/Flyway and publishes a `<service>.events` event after commit. Services after the first consume the first service's events (a sample flow to replace with real use cases). The entity generated per service (name, creation date) is a **starting point** to rename and enrich for the domain.
 
-## Autres composants
+## Other components
 
-| Composant | Port(s) | Usage |
+| Component | Port(s) | Use |
 |---|---|---|
-| Frontend (nginx) | 4200 → 80 | Application Angular, relaie `/api` vers la gateway |
-| PostgreSQL | 5432 | Une base par service |
-| Kafka | 9092 (interne), 29092 (hôte) | Bus d'événements |
-| Kafka UI | 8090 | Inspection des topics |
-| Keycloak | 8180 → 8080 | Authentification OIDC, émission des JWT (voir `06-securite.md`) |
-| Elasticsearch | 9200 | Stockage des logs |
-| Logstash | 5000 | Réception TCP des logs JSON |
-| Kibana | 5601 | Exploration des logs |
+| Frontend (nginx) | 4200 → 80 | Angular application, forwards `/api` to the gateway |
+| PostgreSQL | 5432 | One database per service |
+| Kafka | 9092 (internal), 29092 (host) | Event bus |
+| Kafka UI | 8090 | Topic inspection |
+| Keycloak | 8180 → 8080 | OIDC authentication, JWT issuing (see `06-security.md`) |
+| Elasticsearch | 9200 | Log storage |
+| Logstash | 5000 | TCP reception of JSON logs |
+| Kibana | 5601 | Log exploration |
 
-## Règles d'évolution
+In Docker Compose, all these ports are published on `127.0.0.1` only.
 
-- Ajouter un service : voir `references/architecture.md` du skill, puis un ADR si une décision structurante est prise.
-- Les ports ci-dessus sont des valeurs par défaut surchargeables via la variable `SERVER_PORT`.
+## Evolution rules
+
+- Adding a service: see the skill's `references/architecture.md`, then write an ADR if a structural decision is made.
+- The ports above are defaults that can be overridden with the `SERVER_PORT` variable.

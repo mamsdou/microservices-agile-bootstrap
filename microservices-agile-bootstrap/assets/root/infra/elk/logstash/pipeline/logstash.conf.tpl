@@ -6,7 +6,7 @@ input {
 }
 
 filter {
-  # Un index par application (champ "app" ajoute par logback), puis par jour.
+  # One index per application ("app" field added by logback), then per day.
   if [app] {
     mutate { add_field => { "[@metadata][index]" => "logs-%{app}" } }
   } else {

@@ -8,8 +8,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Agregat exemple : a remplacer par le vrai modele du domaine.
- * Ce service est le seul proprietaire de la table "@@TABLE@@".
+ * Sample aggregate: replace with the real domain model.
+ * This service is the only owner of the "@@TABLE@@" table.
  */
 @Entity
 @Table(name = "@@TABLE@@")
@@ -25,7 +25,7 @@ public class @@ENTITY@@ {
     private Instant createdAt;
 
     protected @@ENTITY@@() {
-        // requis par JPA
+        // required by JPA
     }
 
     public @@ENTITY@@(String name) {

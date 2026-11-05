@@ -4,7 +4,7 @@ server {
   root /usr/share/nginx/html;
   index index.html;
 
-  # Les appels /api sont relayes vers la passerelle (meme nom de service en Compose et Kubernetes).
+  # /api calls are forwarded to the gateway (same service name in Compose and Kubernetes).
   location /api/ {
     proxy_pass http://api-gateway:8080;
     proxy_set_header Host $host;

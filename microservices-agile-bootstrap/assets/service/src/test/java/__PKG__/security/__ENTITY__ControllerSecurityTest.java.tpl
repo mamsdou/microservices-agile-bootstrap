@@ -22,7 +22,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
-/** Verifie la matrice d'acces : sans jeton 401, lecteur ne peut pas ecrire (403), redacteur peut. */
+/** Checks the access matrix: no token 401, a reader cannot write (403), a writer can. */
 @WebMvcTest(@@ENTITY@@Controller.class)
 @Import(SecurityConfig.class)
 @TestPropertySource(properties = {

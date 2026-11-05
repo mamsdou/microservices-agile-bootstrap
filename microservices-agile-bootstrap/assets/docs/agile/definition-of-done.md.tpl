@@ -1,25 +1,25 @@
 # Definition of Done (DoD)
 
-Un élément du backlog est « Terminé » seulement si **tout** ce qui suit est vrai. La DoD est commune à l'équipe et s'applique à chaque incrément.
+A backlog item is "Done" only if **all** of the following are true. The DoD is shared by the team and applies to every increment.
 
 ## Code
-- [ ] Code relu (Pull Request approuvée par au moins une autre personne).
-- [ ] Respecte les règles d'architecture de `CONTRIBUTING.md` (un service = ses données, contrats rétrocompatibles).
-- [ ] Aucune alerte critique d'analyse statique ; pas de secret dans le dépôt.
+- [ ] Code reviewed (Pull Request approved by at least one other person).
+- [ ] Follows the architecture rules in `CONTRIBUTING.md` (one service = its data, backward-compatible contracts).
+- [ ] No critical static analysis alert; no secret in the repository.
 
 ## Tests
-- [ ] Tests unitaires ajoutés/mis à jour et verts (`mvn -B verify`).
-- [ ] Tests d'intégration pour les nouveaux contrats (REST, Kafka) quand pertinent.
-- [ ] Critères d'acceptation de la story vérifiés, par une personne autre que l'auteur ou automatiquement.
-- [ ] Build front OK (`ng build`) si le front est touché.
+- [ ] Unit tests added/updated and passing (`mvn -B verify`).
+- [ ] Integration tests for new contracts (REST, Kafka) where relevant.
+- [ ] Story acceptance criteria verified, automatically or by someone other than the author.
+- [ ] Front build OK (`ng build`) if the front is touched.
 
-## Livraison
-- [ ] Pipeline CI vert sur la branche.
-- [ ] Déployable : l'image Docker se construit et la stack démarre (`docker compose up`).
-- [ ] Migrations Flyway ajoutées si le schéma change (jamais de modification d'une migration appliquée).
-- [ ] Logs exploitables dans Kibana pour le nouveau comportement.
+## Delivery
+- [ ] CI pipeline green on the branch.
+- [ ] Deployable: the Docker image builds and the stack starts (`docker compose up`).
+- [ ] Flyway migrations added if the schema changes (an applied migration is never modified).
+- [ ] Usable logs in Kibana for the new behavior.
 
 ## Documentation
-- [ ] ADR créé si une décision d'architecture a été prise.
-- [ ] Docs `docs/` mises à jour (contrats d'API, événements, schéma) et README à jour.
-- [ ] Story démontrable lors de la revue de sprint.
+- [ ] ADR created if an architecture decision was made.
+- [ ] `docs/` updated (API contracts, events, schema) and README up to date.
+- [ ] Story can be demonstrated at the sprint review.

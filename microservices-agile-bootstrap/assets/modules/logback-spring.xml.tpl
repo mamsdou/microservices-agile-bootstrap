@@ -5,7 +5,7 @@
 
   <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="unknown"/>
 
-  <!-- Profil "elk" : les logs partent aussi en JSON vers Logstash (TCP 5000). -->
+  <!-- "elk" profile: logs are also sent as JSON to Logstash (TCP 5000). -->
   <springProfile name="elk">
     <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
       <destination>${LOGSTASH_HOST:-localhost}:5000</destination>

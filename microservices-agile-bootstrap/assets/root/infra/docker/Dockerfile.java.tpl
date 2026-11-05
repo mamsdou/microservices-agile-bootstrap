@@ -1,5 +1,5 @@
-# Image generique pour tous les modules Spring Boot.
-# Construction depuis la racine du depot :
+# Generic image for all Spring Boot modules.
+# Build from the repository root:
 #   docker build -f infra/docker/Dockerfile.java --build-arg MODULE_PATH=services/<x>-service -t <image> .
 FROM maven:3.9-eclipse-temurin-21 AS build
 ARG MODULE_PATH
@@ -12,7 +12,7 @@ FROM eclipse-temurin:21-jre
 ARG MODULE_PATH
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl \
- && rm -rf /var/lib/apt/lists/* \
+ && apt-get clean \
  && useradd --system --uid 1001 app
 WORKDIR /app
 COPY --from=build /workspace/${MODULE_PATH}/target/*.jar app.jar

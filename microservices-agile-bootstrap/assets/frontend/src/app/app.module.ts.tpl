@@ -13,7 +13,7 @@ import { AuthService } from './auth.service';
     BrowserModule,
     HttpClientModule,
     FormsModule,
-    // Ajoute automatiquement "Authorization: Bearer <token>" aux appels dont l'URL commence par /api.
+    // Automatically adds "Authorization: Bearer <token>" to calls whose URL starts with /api.
     OAuthModule.forRoot({ resourceServer: { allowedUrls: ['/api'], sendAccessToken: true } }),
   ],
   providers: [

@@ -12,7 +12,7 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
   server:
-    # Evite les messages d'auto-preservation bruyants en developpement.
+    # Avoids noisy self-preservation messages in development.
     enable-self-preservation: false
 
 management:

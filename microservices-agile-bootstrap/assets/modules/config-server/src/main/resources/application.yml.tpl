@@ -10,7 +10,7 @@ spring:
     config:
       server:
         native:
-          # En production : remplacer par un depot Git (voir ADR-0002).
+          # In production: replace with a Git repository (see ADR-0002).
           search-locations: classpath:/config-repo/
 
 management:

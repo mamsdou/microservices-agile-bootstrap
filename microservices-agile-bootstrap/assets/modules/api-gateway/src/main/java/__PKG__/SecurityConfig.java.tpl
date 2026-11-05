@@ -9,9 +9,9 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
 /**
- * La gateway exige un jeton JWT valide (emis par Keycloak) sur toute l'API ; les droits par role
- * sont verifies par chaque service (defense en profondeur, voir ADR-0010). Le jeton est relaye
- * tel quel aux services.
+ * The gateway requires a valid JWT (issued by Keycloak) on the whole API; per-role rights are
+ * checked by each service (defense in depth, see ADR-0010). The token is forwarded to the
+ * services unchanged.
  */
 @Configuration
 @EnableWebFluxSecurity
@@ -22,7 +22,7 @@ public class SecurityConfig {
         return http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(exchanges -> exchanges
-                // Les requetes de pre-vol CORS n'ont pas de jeton ; la gateway y repond ensuite.
+                // CORS preflight requests carry no token; the gateway then answers them.
                 .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .pathMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .pathMatchers("/api/**").authenticated()

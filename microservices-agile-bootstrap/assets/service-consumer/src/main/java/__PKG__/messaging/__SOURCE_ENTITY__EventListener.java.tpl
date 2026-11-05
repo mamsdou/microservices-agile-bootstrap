@@ -6,9 +6,9 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Consomme les evenements du service "@@SOURCE_SERVICE@@" (topic "@@SOURCE_TOPIC@@").
- * Exemple minimal : on journalise. A remplacer par la reaction metier (et rendre le traitement
- * idempotent : Kafka garantit une livraison au moins une fois).
+ * Consumes the events of the "@@SOURCE_SERVICE@@" service (topic "@@SOURCE_TOPIC@@").
+ * Minimal example: it only logs. Replace with the business reaction (and make the processing
+ * idempotent: Kafka guarantees at-least-once delivery).
  */
 @Component
 public class @@SOURCE_ENTITY@@EventListener {
@@ -17,6 +17,6 @@ public class @@SOURCE_ENTITY@@EventListener {
 
     @KafkaListener(topics = "${app.kafka.source-topic}", groupId = "${spring.kafka.consumer.group-id}")
     public void onMessage(String payload) {
-        log.info("Evenement recu de @@SOURCE_SERVICE@@ : {}", payload);
+        log.info("Event received from @@SOURCE_SERVICE@@ : {}", payload);
     }
 }

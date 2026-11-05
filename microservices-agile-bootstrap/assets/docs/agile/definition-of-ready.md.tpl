@@ -1,13 +1,13 @@
 # Definition of Ready (DoR)
 
-Une user story n'entre dans un sprint que si **toutes** les conditions suivantes sont vraies. Elle protège l'équipe contre les stories floues qui débordent.
+A user story enters a sprint only if **all** of the following conditions are true. It protects the team against vague stories that overrun.
 
-- [ ] Formulée « En tant que… je veux… afin de… » : la valeur est claire.
-- [ ] Critères d'acceptation vérifiables (format Given/When/Then ou liste testable).
-- [ ] Respecte INVEST : indépendante, négociable, de valeur, estimable, petite, testable.
-- [ ] Estimée par l'équipe (story points) et ≤ 8 points ; sinon découpée.
-- [ ] Services et contrats concernés identifiés (API REST, événements Kafka, tables).
-- [ ] Dépendances levées ou planifiées (autre story, accès, maquette, données de test).
-- [ ] Maquette ou description d'écran disponible si la story touche l'interface.
-- [ ] Impacts non fonctionnels notés (sécurité, performance, données personnelles).
-- [ ] Le Product Owner est disponible pour répondre aux questions pendant le sprint.
+- [ ] Written as "As a… I want… so that…": the value is clear.
+- [ ] Verifiable acceptance criteria (Given/When/Then format or testable list).
+- [ ] Follows INVEST: independent, negotiable, valuable, estimable, small, testable.
+- [ ] Estimated by the team (story points) and ≤ 8 points; otherwise split.
+- [ ] Affected services and contracts identified (REST API, Kafka events, tables).
+- [ ] Dependencies cleared or planned (other story, access, mockup, test data).
+- [ ] Mockup or screen description available if the story touches the UI.
+- [ ] Non-functional impacts noted (security, performance, personal data).
+- [ ] The Product Owner is available to answer questions during the sprint.
